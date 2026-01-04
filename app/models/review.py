@@ -1,4 +1,5 @@
-from db import db
+from app.db import db
+from datetime import datetime
 class Review(db.Model):
     __tablename__ = 'reviews'
     

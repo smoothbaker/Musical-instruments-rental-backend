@@ -1,5 +1,6 @@
-from db import db
+from app.db import db
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'users'

@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
-from app.models import db
+from app.db import db
 from app.config import Config
 from flask_migrate import Migrate
 
