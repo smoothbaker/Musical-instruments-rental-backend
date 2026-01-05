@@ -49,7 +49,7 @@ class Login(MethodView):
                 'user_type': user.user_type
             }
         }
-
+#to refresh access token
 @bp.route('/refresh')
 class Refresh(MethodView):
     @bp.response(200)

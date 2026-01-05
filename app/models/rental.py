@@ -10,5 +10,5 @@ class Rental(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     actual_return_date = db.Column(db.Date)
     total_cost = db.Column(db.Float)
-    status = db.Column(db.String(20), default='pending')  # pending, active, completed, cancelled
+    status = db.Column(db.String(20), default='pending')  # pending, active, completed, cancelled (change status as needed "active" or completed)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

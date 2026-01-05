@@ -78,3 +78,5 @@ def create_instrument():
     db.session.commit()
     
     return jsonify({'message': 'Instrument created', 'id': instrument.id}), 201
+
+# Additional routes for updating and deleting instruments could be added here with appropriate permissions checks.
