@@ -3,6 +3,7 @@ from flask_jwt_extended import JWTManager
 from app.db import db
 from app.config import Config
 from flask_migrate import Migrate
+from flask_smorest import Api
 
 def create_app():
     app = Flask(__name__)
@@ -13,11 +14,15 @@ def create_app():
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
     
+    # Initialize API
+    api = Api(app)
+    
     # Register blueprints
-    from app.routes import auth, instruments, rentals, recommendations
+    from app.routes import auth, instruments, rentals, recommendations, users
     app.register_blueprint(auth.bp)
     app.register_blueprint(instruments.bp)
     app.register_blueprint(rentals.bp)
     app.register_blueprint(recommendations.bp)
+    app.register_blueprint(users.bp)
     
     return app

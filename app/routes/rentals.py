@@ -64,7 +64,7 @@ def get_user_rentals():
 @bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
 def get_rental(id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Convert JWT identity to int for comparison
     rental = Rental.query.get_or_404(id)
     
     if rental.user_id != user_id:
@@ -87,7 +87,7 @@ def get_rental(id):
 @bp.route('/<int:id>/return', methods=['POST'])
 @jwt_required()
 def return_rental(id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Convert JWT identity to int for comparison
     rental = Rental.query.get_or_404(id)
     
     if rental.user_id != user_id:

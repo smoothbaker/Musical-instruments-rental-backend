@@ -2,5 +2,6 @@ Flask>=2.0
 Flask-JWT-Extended
 Flask-Migrate
 Flask-SQLAlchemy
+Flask-Smorest
 psycopg2-binary
 Werkzeug

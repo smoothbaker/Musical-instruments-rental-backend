@@ -10,6 +10,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20))
+    user_type = db.Column(db.String(20), nullable=False, default='renter')  # 'owner' or 'renter'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

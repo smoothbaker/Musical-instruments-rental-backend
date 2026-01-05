@@ -13,7 +13,8 @@ with app.app_context():
     resp = client.post('/api/auth/register', json={
         'email': 'tester2@example.com',
         'password': 'password123',
-        'name': 'Tester2'
+        'name': 'Tester2',
+        'user_type': 'renter'
     })
     print('register', resp.status_code, resp.get_data(as_text=True))
 
