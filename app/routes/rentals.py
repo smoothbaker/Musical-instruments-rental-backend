@@ -1,102 +1,112 @@
-from flask import Blueprint, request, jsonify
+from flask.views import MethodView
+from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import db, Rental, Instrument
+from app.db import db
+from app.models import Rental, Instru_ownership
+from app.schemas import RentalSchema
 from datetime import datetime
 
 bp = Blueprint('rentals', __name__, url_prefix='/api/rentals')
 
-@bp.route('', methods=['POST'])
-@jwt_required()
-def create_rental():
-    data = request.get_json()
-    user_id = get_jwt_identity()
-    
-    instrument = Instrument.query.get_or_404(data['instrument_id'])
-    
-    if not instrument.is_available:
-        return jsonify({'error': 'Instrument not available'}), 400
-    
-    # Parse dates
-    start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
-    end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
-    
-    # Calculate cost
-    days = (end_date - start_date).days + 1
-    total_cost = days * instrument.daily_rate
-    
-    rental = Rental(
-        user_id=user_id,
-        instrument_id=instrument.id,
-        start_date=start_date,
-        end_date=end_date,
-        total_cost=total_cost,
-        status='pending'
-    )
-    
-    # Mark instrument as unavailable
-    instrument.is_available = False
-    
-    db.session.add(rental)
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Rental created',
-        'rental_id': rental.id,
-        'total_cost': total_cost
-    }), 201
+@bp.route('')
+class RentalList(MethodView):
+    @bp.arguments(RentalSchema)
+    @bp.response(201, RentalSchema)
+    @jwt_required()
+    def post(self, rental_data):
+        """Create a new rental"""
+        user_id = int(get_jwt_identity())
 
-@bp.route('', methods=['GET'])
-@jwt_required()
-def get_user_rentals():
-    user_id = get_jwt_identity()
-    rentals = Rental.query.filter_by(user_id=user_id).all()
-    
-    return jsonify([{
-        'id': r.id,
-        'instrument_id': r.instrument_id,
-        'instrument_name': r.instrument.name,
-        'start_date': r.start_date.isoformat(),
-        'end_date': r.end_date.isoformat(),
-        'total_cost': r.total_cost,
-        'status': r.status
-    } for r in rentals]), 200
+        ownership = Instru_ownership.query.get_or_404(rental_data['instru_ownership_id'])
 
-@bp.route('/<int:id>', methods=['GET'])
-@jwt_required()
-def get_rental(id):
-    user_id = int(get_jwt_identity())  # Convert JWT identity to int for comparison
-    rental = Rental.query.get_or_404(id)
-    
-    if rental.user_id != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    return jsonify({
-        'id': rental.id,
-        'instrument': {
-            'id': rental.instrument.id,
-            'name': rental.instrument.name,
-            'category': rental.instrument.category
-        },
-        'start_date': rental.start_date.isoformat(),
-        'end_date': rental.end_date.isoformat(),
-        'actual_return_date': rental.actual_return_date.isoformat() if rental.actual_return_date else None,
-        'total_cost': rental.total_cost,
-        'status': rental.status
-    }), 200
+        if not ownership.is_available:
+            abort(400, message="Instrument not available")
 
-@bp.route('/<int:id>/return', methods=['POST'])
-@jwt_required()
-def return_rental(id):
-    user_id = int(get_jwt_identity())  # Convert JWT identity to int for comparison
-    rental = Rental.query.get_or_404(id)
-    
-    if rental.user_id != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    rental.actual_return_date = datetime.utcnow().date()
-    rental.status = 'completed'
-    rental.instrument.is_available = True
-    
-    db.session.commit()
-    
-    return jsonify({'message': 'Rental returned successfully'}), 200
+        if ownership.user_id == user_id:
+            abort(400, message="You cannot rent your own instrument")
+
+        # Parse dates
+        start_date = rental_data['start_date']
+        end_date = rental_data['end_date']
+
+        # Calculate cost
+        days = (end_date - start_date).days + 1
+        total_cost = days * ownership.daily_rate
+
+        rental = Rental(
+            user_id=user_id,
+            instru_ownership_id=ownership.id,
+            start_date=start_date,
+            end_date=end_date,
+            total_cost=total_cost,
+            status='pending'
+        )
+
+        # Mark ownership as unavailable
+        ownership.is_available = False
+
+        db.session.add(rental)
+        db.session.commit()
+
+        return rental
+
+    @bp.response(200, RentalSchema(many=True))
+    @jwt_required()
+    def get(self):
+        """Get current user's rentals"""
+        user_id = int(get_jwt_identity())
+        rentals = Rental.query.filter_by(user_id=user_id).all()
+        return rentals
+
+@bp.route('/<int:rental_id>')
+class RentalResource(MethodView):
+    @bp.response(200, RentalSchema)
+    @jwt_required()
+    def get(self, rental_id):
+        """Get rental details"""
+        user_id = int(get_jwt_identity())
+        rental = Rental.query.get_or_404(rental_id)
+
+        if rental.user_id != user_id:
+            abort(403, message="Unauthorized")
+
+        return rental
+
+    @bp.response(204)
+    @jwt_required()
+    def delete(self, rental_id):
+        """Cancel rental (if still pending)"""
+        user_id = int(get_jwt_identity())
+        rental = Rental.query.get_or_404(rental_id)
+
+        if rental.user_id != user_id:
+            abort(403, message="Unauthorized")
+
+        if rental.status != 'pending':
+            abort(400, message="Cannot cancel rental that is already active")
+
+        # Make ownership available again
+        rental.instru_ownership.is_available = True
+
+        db.session.delete(rental)
+        db.session.commit()
+
+@bp.route('/<int:rental_id>/return')
+class ReturnRental(MethodView):
+    @bp.response(200)
+    @jwt_required()
+    def post(self, rental_id):
+        """Return rental"""
+        user_id = int(get_jwt_identity())
+        rental = Rental.query.get_or_404(rental_id)
+
+        if rental.user_id != user_id:
+            abort(403, message="Unauthorized")
+
+        rental.actual_return_date = datetime.utcnow().date()
+        rental.status = 'completed'
+        rental.instru_ownership.is_available = True
+
+        db.session.commit()
+
+        return {'message': 'Rental returned successfully'}

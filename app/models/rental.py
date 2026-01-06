@@ -5,10 +5,14 @@ class Rental(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    instrument_id = db.Column(db.Integer, db.ForeignKey('instruments.id'), nullable=False)
+    instru_ownership_id = db.Column(db.Integer, db.ForeignKey('instruments ownership.id'), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     actual_return_date = db.Column(db.Date)
     total_cost = db.Column(db.Float)
-    status = db.Column(db.String(20), default='pending')  # pending, active, completed, cancelled (change status as needed "active" or completed)
+    status = db.Column(db.String(20), default='pending')  # pending, active, completed, cancelled
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', back_populates='rentals')
+    instru_ownership = db.relationship('Instru_ownership', back_populates='rentals')

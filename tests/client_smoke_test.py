@@ -9,49 +9,77 @@ with app.app_context():
     db.create_all()
     client = app.test_client()
 
-    # Register
+    # Register owner
     resp = client.post('/api/auth/register', json={
-        'email': 'tester2@example.com',
+        'email': 'owner@example.com',
         'password': 'password123',
-        'name': 'Tester2',
-        'user_type': 'renter'
+        'name': 'Owner',
+        'user_type': 'owner'
     })
-    print('register', resp.status_code, resp.get_data(as_text=True))
+    print('register_owner', resp.status_code, resp.get_data(as_text=True))
 
-    # Login
+    # Login as owner
     resp = client.post('/api/auth/login', json={
-        'email': 'tester2@example.com',
+        'email': 'owner@example.com',
         'password': 'password123'
     })
-    print('login', resp.status_code, resp.get_data(as_text=True))
+    print('login_owner', resp.status_code, resp.get_data(as_text=True))
     if resp.status_code != 200:
-        raise SystemExit('login failed')
+        raise SystemExit('owner login failed')
 
-    tokens = resp.get_json()
-    access = tokens['access_token']
-    headers = {'Authorization': f'Bearer {access}'}
+    owner_tokens = resp.get_json()
+    owner_access = owner_tokens['access_token']
+    owner_headers = {'Authorization': f'Bearer {owner_access}'}
 
-    # Create instrument
+    # Create instrument (catalog)
     resp = client.post('/api/instruments', json={
-        'name': 'Client Guitar',
+        'name': 'Test Guitar',
         'category': 'guitar',
-        'daily_rate': 15.0
-    }, headers=headers)
+        'brand': 'Fender',
+        'model': 'Stratocaster',
+        'description': 'A great guitar'
+    }, headers=owner_headers)
     print('create_instrument', resp.status_code, resp.get_data(as_text=True))
 
-    # List instruments
-    resp = client.get('/api/instruments')
-    print('list_instruments', resp.status_code, resp.get_data(as_text=True))
+    # Create instru_ownership
+    resp = client.post('/api/instru-ownership', json={
+        'instrument_id': 1,
+        'condition': 'new',
+        'daily_rate': 15.0,
+        'location': 'New York'
+    }, headers=owner_headers)
+    print('create_instru_ownership', resp.status_code, resp.get_data(as_text=True))
+
+    # Register renter
+    resp = client.post('/api/auth/register', json={
+        'email': 'renter@example.com',
+        'password': 'password123',
+        'name': 'Renter',
+        'user_type': 'renter'
+    })
+    print('register_renter', resp.status_code, resp.get_data(as_text=True))
+
+    # Login as renter
+    resp = client.post('/api/auth/login', json={
+        'email': 'renter@example.com',
+        'password': 'password123'
+    })
+    print('login_renter', resp.status_code, resp.get_data(as_text=True))
+    if resp.status_code != 200:
+        raise SystemExit('renter login failed')
+
+    renter_tokens = resp.get_json()
+    renter_access = renter_tokens['access_token']
+    renter_headers = {'Authorization': f'Bearer {renter_access}'}
+
+    # List available instru_ownership
+    resp = client.get('/api/instru-ownership')
+    print('list_instru_ownership', resp.status_code, resp.get_data(as_text=True))
 
     # Create rental
-    instruments = resp.get_json()
-    if instruments:
-        instrument_id = instruments[0]['id']
-        resp = client.post('/api/rentals', json={
-            'instrument_id': instrument_id,
-            'start_date': '2026-01-05',
-            'end_date': '2026-01-07'
-        }, headers=headers)
-        print('create_rental', resp.status_code, resp.get_data(as_text=True))
-    else:
-        print('no instruments')
+    resp = client.post('/api/rentals', json={
+        'instru_ownership_id': 1,
+        'start_date': '2026-01-05',
+        'end_date': '2026-01-07'
+    }, headers=renter_headers)
+    print('create_rental', resp.status_code, resp.get_data(as_text=True))

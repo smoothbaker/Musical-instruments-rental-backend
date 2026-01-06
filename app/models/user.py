@@ -14,8 +14,9 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    rentals = db.relationship('Rental', backref='user', lazy=True)
+    rentals = db.relationship('Rental', back_populates='user', lazy=True)
     reviews = db.relationship('Review', backref='user', lazy=True)
+    instru_ownerships = db.relationship('Instru_ownership', back_populates='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

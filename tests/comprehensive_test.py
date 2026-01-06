@@ -5,6 +5,8 @@ from app import create_app, db
 
 app = create_app()
 with app.app_context():
+    # Reset database for clean test
+    db.drop_all()
     db.create_all()
     client = app.test_client()
 
@@ -82,10 +84,7 @@ with app.app_context():
         'category': 'guitar',
         'brand': 'Fender',
         'model': 'Stratocaster',
-        'condition': 'excellent',
-        'daily_rate': 25.0,
-        'description': 'Premium electric guitar in excellent condition',
-        'location': 'New York'
+        'description': 'Premium electric guitar'
     }, headers={'Authorization': f'Bearer {owner_token}'})
     print(f"Status: {resp.status_code}")
     assert resp.status_code == 201, f"Expected 201, got {resp.status_code}"
@@ -102,30 +101,43 @@ with app.app_context():
     assert len(instruments) > 0, "Should have at least one instrument"
     print(f"✓ Instruments listed successfully")
     
-    # Test 8: Get Instrument Details
-    print("\n[TEST 8] Get Instrument Details")
-    resp = client.get(f'/api/instruments/{instrument_id}')
+    # Test 8: Create Instru Ownership as Owner
+    print("\n[TEST 8] Create Instrument Ownership as Owner")
+    resp = client.post('/api/instru-ownership', json={
+        'instrument_id': instrument_id,
+        'condition': 'excellent',
+        'daily_rate': 25.0,
+        'location': 'New York'
+    }, headers={'Authorization': f'Bearer {owner_token}'})
+    print(f"Status: {resp.status_code}")
+    assert resp.status_code == 201, f"Expected 201, got {resp.status_code}"
+    ownership_id = resp.get_json()['id']
+    print(f"✓ Instrument ownership created with ID: {ownership_id}")
+    
+    # Test 9: List Available Instruments for Rent
+    print("\n[TEST 9] List Available Instruments for Rent")
+    resp = client.get('/api/instru-ownership')
     print(f"Status: {resp.status_code}")
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
-    instrument = resp.get_json()
-    print(f"Instrument: {instrument['name']} - ${instrument['daily_rate']}/day")
-    print(f"✓ Instrument details retrieved")
+    available_instruments = resp.get_json()
+    print(f"Found {len(available_instruments)} available instruments")
+    print(f"✓ Available instruments listed successfully")
     
-    # Test 9: Create Rental as Renter
-    print("\n[TEST 9] Create Rental as Renter")
+    # Test 10: Create Rental as Renter
+    print("\n[TEST 10] Create Rental as Renter")
     resp = client.post('/api/rentals', json={
-        'instrument_id': instrument_id,
+        'instru_ownership_id': ownership_id,
         'start_date': '2026-01-10',
         'end_date': '2026-01-15'
     }, headers={'Authorization': f'Bearer {renter_token}'})
     print(f"Status: {resp.status_code}")
     assert resp.status_code == 201, f"Expected 201, got {resp.status_code}"
-    rental_id = resp.get_json()['rental_id']
+    rental_id = resp.get_json()['id']
     total_cost = resp.get_json()['total_cost']
     print(f"✓ Rental created with ID: {rental_id}, Total Cost: ${total_cost}")
     
-    # Test 10: Get User Rentals
-    print("\n[TEST 10] Get User Rentals")
+    # Test 11: Get User Rentals
+    print("\n[TEST 11] Get User Rentals")
     resp = client.get('/api/rentals', headers={'Authorization': f'Bearer {renter_token}'})
     print(f"Status: {resp.status_code}")
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
@@ -180,6 +192,20 @@ with app.app_context():
     print(f"Updated: {updated_user['name']}, Phone: {updated_user['phone']}")
     print(f"✓ User updated successfully")
     
-    print("\n" + "=" * 60)
-    print("ALL TESTS PASSED! ✓")
-    print("=" * 60)
+    # Test 16: Get Renter Dashboard
+    print("\n[TEST 16] Get Renter Dashboard")
+    resp = client.get('/api/dashboard/renter', headers={'Authorization': f'Bearer {renter_token}'})
+    print(f"Status: {resp.status_code}")
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+    dashboard = resp.get_json()
+    print(f"Renter Dashboard: {dashboard['statistics']}")
+    print(f"✓ Renter dashboard retrieved successfully")
+    
+    # Test 17: Get Owner Dashboard
+    print("\n[TEST 17] Get Owner Dashboard")
+    resp = client.get('/api/dashboard/owner', headers={'Authorization': f'Bearer {owner_token}'})
+    print(f"Status: {resp.status_code}")
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+    dashboard = resp.get_json()
+    print(f"Owner Dashboard: {dashboard['instrument_statistics']}")
+    print(f"✓ Owner dashboard retrieved successfully")

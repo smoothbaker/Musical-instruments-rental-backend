@@ -1,82 +1,98 @@
-from flask import Blueprint, request, jsonify
+from flask.views import MethodView
+from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from app.models import db, Instrument
+from app.db import db
+from app.models import Instrument, Instru_ownership
+from app.schemas import InstrumentSchema
 
 bp = Blueprint('instruments', __name__, url_prefix='/api/instruments')
 
-@bp.route('', methods=['GET'])
-def get_instruments():
-    # Query parameters for filtering
-    category = request.args.get('category')
-    min_price = request.args.get('min_price', type=float)
-    max_price = request.args.get('max_price', type=float)
-    available_only = request.args.get('available', type=bool, default=True)
-    
-    query = Instrument.query
-    
-    if category:
-        query = query.filter_by(category=category)
-    if min_price:
-        query = query.filter(Instrument.daily_rate >= min_price)
-    if max_price:
-        query = query.filter(Instrument.daily_rate <= max_price)
-    if available_only:
-        query = query.filter_by(is_available=True)
-    
-    instruments = query.all()
-    
-    return jsonify([{
-        'id': i.id,
-        'name': i.name,
-        'category': i.category,
-        'brand': i.brand,
-        'model': i.model,
-        'condition': i.condition,
-        'daily_rate': i.daily_rate,
-        'description': i.description,
-        'image_url': i.image_url,
-        'location': i.location,
-        'is_available': i.is_available
-    } for i in instruments]), 200
+@bp.route('')
+class InstrumentList(MethodView):
+    @bp.response(200, InstrumentSchema(many=True))
+    def get(self):
+        """Get all instruments in the catalog"""
+        instruments = Instrument.query.all()
+        return instruments
 
-@bp.route('/<int:id>', methods=['GET'])
-def get_instrument(id):
-    instrument = Instrument.query.get_or_404(id)
-    
-    return jsonify({
-        'id': instrument.id,
-        'name': instrument.name,
-        'category': instrument.category,
-        'brand': instrument.brand,
-        'model': instrument.model,
-        'condition': instrument.condition,
-        'daily_rate': instrument.daily_rate,
-        'description': instrument.description,
-        'image_url': instrument.image_url,
-        'location': instrument.location,
-        'is_available': instrument.is_available
-    }), 200
+    @bp.arguments(InstrumentSchema)
+    @bp.response(201, InstrumentSchema)
+    @jwt_required()
+    def post(self, instrument_data):
+        """Create a new instrument in the catalog (any authenticated user)"""
+        # Check if instrument with same name/brand/model already exists
+        existing = Instrument.query.filter_by(
+            name=instrument_data['name'],
+            brand=instrument_data.get('brand'),
+            model=instrument_data.get('model')
+        ).first()
+        
+        if existing:
+            abort(400, message="Similar instrument already exists in catalog")
+        
+        instrument = Instrument(**instrument_data)
+        db.session.add(instrument)
+        db.session.commit()
+        return instrument
 
-@bp.route('', methods=['POST'])
-@jwt_required()  # Could add admin check here
-def create_instrument():
-    data = request.get_json()
-    
-    instrument = Instrument(
-        name=data['name'],
-        category=data['category'],
-        brand=data.get('brand'),
-        model=data.get('model'),
-        condition=data.get('condition'),
-        daily_rate=data['daily_rate'],
-        description=data.get('description'),
-        image_url=data.get('image_url'),
-        location=data.get('location')
-    )
-    
-    db.session.add(instrument)
-    db.session.commit()
-    
-    return jsonify({'message': 'Instrument created', 'id': instrument.id}), 201
+@bp.route('/<int:instrument_id>')
+class InstrumentResource(MethodView):
+    @bp.response(200, InstrumentSchema)
+    def get(self, instrument_id):
+        """Get instrument details from catalog"""
+        instrument = Instrument.query.get_or_404(instrument_id)
+        return instrument
 
-# Additional routes for updating and deleting instruments could be added here with appropriate permissions checks.
+    @bp.arguments(InstrumentSchema)
+    @bp.response(200, InstrumentSchema)
+    @jwt_required()
+    def put(self, update_data, instrument_id):
+        """Update instrument in catalog"""
+        instrument = Instrument.query.get_or_404(instrument_id)
+        
+        # Prevent updating if there are active ownerships
+        if instrument.instru_ownerships:
+            abort(400, message="Cannot update instrument that has ownership records")
+        
+        for key, value in update_data.items():
+            setattr(instrument, key, value)
+        
+        db.session.commit()
+        return instrument
+
+    @bp.response(204)
+    @jwt_required()
+    def delete(self, instrument_id):
+        """Delete instrument from catalog"""
+        instrument = Instrument.query.get_or_404(instrument_id)
+        
+        # Prevent deleting if there are ownerships
+        if instrument.instru_ownerships:
+            abort(400, message="Cannot delete instrument that has ownership records")
+        
+        db.session.delete(instrument)
+        db.session.commit()
+
+@bp.route('/available')
+class AvailableInstruments(MethodView):
+    @bp.response(200)
+    def get(self):
+        """Get all available instruments for rent (with ownership details)"""
+        ownerships = Instru_ownership.query.filter_by(is_available=True).all()
+        
+        return [{
+            'id': o.id,
+            'instrument': {
+                'id': o.instrument.id,
+                'name': o.instrument.name,
+                'category': o.instrument.category,
+                'brand': o.instrument.brand,
+                'model': o.instrument.model,
+                'description': o.instrument.description
+            },
+            'condition': o.condition,
+            'daily_rate': o.daily_rate,
+            'image_url': o.image_url,
+            'location': o.location,
+            'owner_id': o.user_id
+        } for o in ownerships]

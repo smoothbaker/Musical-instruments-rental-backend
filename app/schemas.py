@@ -21,29 +21,41 @@ class InstrumentSchema(Schema):
     category = fields.Str(required=True)
     brand = fields.Str()
     model = fields.Str()
-    condition = fields.Str()
-    daily_rate = fields.Float(required=True)
     description = fields.Str()
+    image_url = fields.Str()
+    created_at = fields.DateTime(dump_only=True)
+
+class InstruOwnershipSchema(Schema):
+    id = fields.Int(dump_only=True)
+    user_id = fields.Int(dump_only=True)
+    instrument_id = fields.Int(required=True)
+    condition = fields.Str(validate=lambda x: x in ['new', 'good', 'fair', 'poor'])
+    daily_rate = fields.Float(required=True, validate=lambda x: x > 0)
     image_url = fields.Str()
     location = fields.Str()
     is_available = fields.Bool(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
+    
+    # Nested instrument info
+    instrument = fields.Nested(InstrumentSchema, dump_only=True)
+
+class InstruOwnershipUpdateSchema(Schema):
+    condition = fields.Str(validate=lambda x: x in ['new', 'good', 'fair', 'poor'])
+    daily_rate = fields.Float(validate=lambda x: x > 0)
+    image_url = fields.Str()
+    location = fields.Str()
+    is_available = fields.Bool()
 
 class RentalSchema(Schema):
     id = fields.Int(dump_only=True)
     user_id = fields.Int(dump_only=True)
-    instrument_id = fields.Int(required=True)
+    instru_ownership_id = fields.Int(required=True)
     start_date = fields.Date(required=True)
     end_date = fields.Date(required=True)
     actual_return_date = fields.Date()
     total_cost = fields.Float(dump_only=True)
     status = fields.Str(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
-
-class ReviewSchema(Schema):
-    id = fields.Int(dump_only=True)
-    user_id = fields.Int(dump_only=True)
-    instrument_id = fields.Int(required=True)
-    rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
-    comment = fields.Str()
-    created_at = fields.DateTime(dump_only=True)
+    
+    # Nested instru_ownership info
+    instru_ownership = fields.Nested(InstruOwnershipSchema, dump_only=True)
