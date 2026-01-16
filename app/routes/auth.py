@@ -1,7 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from app.models import db, User
+from app.models import db, User, SurveyResponse
 from app.schemas import UserSchema
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -23,6 +23,11 @@ class Register(MethodView):
         user.set_password(user_data['password'])
         
         db.session.add(user)
+        db.session.flush()  # Flush to get the user ID without committing
+        
+        # If user is a renter and survey data is provided in headers/body, create survey response
+        # The survey will be submitted separately via POST /api/survey
+        
         db.session.commit()
         return user
 

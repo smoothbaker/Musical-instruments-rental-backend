@@ -1,0 +1,590 @@
+<!-- 
+  Musical Instrument Rental API - Survey Form HTML/CSS Example
+  This is a simple, responsive survey form that can be integrated into your frontend
+  Designed to work with the /api/survey endpoint
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Preferences Survey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group.required label::after {
+            content: ' *';
+            color: #e74c3c;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-group,
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item,
+        .radio-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"],
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .checkbox-item label,
+        .radio-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-cancel {
+            background: #ecf0f1;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #bdc3c7;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 12px 15px;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Musical Preferences Survey</h1>
+            <p>Help us understand your musical interests to provide better recommendations</p>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            ✓ Survey submitted successfully! You'll receive personalized recommendations soon.
+        </div>
+
+        <div class="info-box">
+            This survey helps our AI recommendation engine suggest instruments that match your preferences, experience level, and budget. Your data is private and secure.
+        </div>
+
+        <form id="surveyForm">
+            <!-- Instrument Preferences Section -->
+            <div class="section-title">🎸 Instrument Preferences</div>
+
+            <div class="form-group required">
+                <label>What instruments are you interested in?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="guitar" name="instruments" value="guitar">
+                        <label for="guitar">Guitar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="piano" name="instruments" value="piano">
+                        <label for="piano">Piano</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="drums" name="instruments" value="drums">
+                        <label for="drums">Drums</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="violin" name="instruments" value="violin">
+                        <label for="violin">Violin</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="flute" name="instruments" value="flute">
+                        <label for="flute">Flute</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="saxophone" name="instruments" value="saxophone">
+                        <label for="saxophone">Saxophone</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="trumpet" name="instruments" value="trumpet">
+                        <label for="trumpet">Trumpet</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bass" name="instruments" value="bass">
+                        <label for="bass">Bass</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="ukulele" name="instruments" value="ukulele">
+                        <label for="ukulele">Ukulele</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="synthesizer" name="instruments" value="synthesizer">
+                        <label for="synthesizer">Synthesizer</label>
+                    </div>
+                </div>
+                <div class="error" id="instrumentsError"></div>
+            </div>
+
+            <div class="form-group required">
+                <label>Your experience level</label>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" id="beginner" name="experience" value="beginner">
+                        <label for="beginner">Beginner - Just starting out</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="intermediate" name="experience" value="intermediate">
+                        <label for="intermediate">Intermediate - Playing for 1-3 years</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="advanced" name="experience" value="advanced">
+                        <label for="advanced">Advanced - Playing for 3+ years</label>
+                    </div>
+                </div>
+                <div class="error" id="experienceError"></div>
+            </div>
+
+            <!-- Music Preferences Section -->
+            <div class="section-title">🎶 Music Preferences</div>
+
+            <div class="form-group required">
+                <label>Favorite music genres</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="rock" name="genres" value="rock">
+                        <label for="rock">Rock</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="jazz" name="genres" value="jazz">
+                        <label for="jazz">Jazz</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="classical" name="genres" value="classical">
+                        <label for="classical">Classical</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="pop" name="genres" value="pop">
+                        <label for="pop">Pop</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="hiphop" name="genres" value="hip-hop">
+                        <label for="hiphop">Hip-Hop</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="country" name="genres" value="country">
+                        <label for="country">Country</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="blues" name="genres" value="blues">
+                        <label for="blues">Blues</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="folk" name="genres" value="folk">
+                        <label for="folk">Folk</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="electronic" name="genres" value="electronic">
+                        <label for="electronic">Electronic</label>
+                    </div>
+                </div>
+                <div class="error" id="genresError"></div>
+            </div>
+
+            <!-- Rental Details Section -->
+            <div class="section-title">💰 Rental Details</div>
+
+            <div class="form-group required">
+                <label>Your budget range (per day)</label>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" id="budget0" name="budget" value="0-25">
+                        <label for="budget0">Budget-friendly ($0-$25)</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="budget25" name="budget" value="25-50">
+                        <label for="budget25">Moderate ($25-$50)</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="budget50" name="budget" value="50-100">
+                        <label for="budget50">Premium ($50-$100)</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="budget100" name="budget" value="100+">
+                        <label for="budget100">Luxury ($100+)</label>
+                    </div>
+                </div>
+                <div class="error" id="budgetError"></div>
+            </div>
+
+            <div class="form-group required">
+                <label>How often do you rent instruments?</label>
+                <div class="radio-group">
+                    <div class="radio-item">
+                        <input type="radio" id="rarely" name="frequency" value="rarely">
+                        <label for="rarely">Rarely - Less than once a month</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="monthly" name="frequency" value="monthly">
+                        <label for="monthly">Monthly - Once a month</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="weekly" name="frequency" value="weekly">
+                        <label for="weekly">Weekly - Multiple times a week</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="frequently" name="frequency" value="frequently">
+                        <label for="frequently">Frequently - Almost daily</label>
+                    </div>
+                </div>
+                <div class="error" id="frequencyError"></div>
+            </div>
+
+            <!-- Additional Information Section -->
+            <div class="section-title">📝 Additional Information</div>
+
+            <div class="form-group required">
+                <label>What's your primary use case?</label>
+                <input type="text" name="usecase" placeholder="e.g., hobby, professional, learning, jamming with friends">
+                <div class="error" id="usecaseError"></div>
+            </div>
+
+            <div class="form-group required">
+                <label>Your location (for pickups)</label>
+                <input type="text" name="location" placeholder="e.g., New York, Los Angeles">
+                <div class="error" id="locationError"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Any additional notes? (optional)</label>
+                <textarea name="notes" placeholder="Tell us anything else that would help us recommend the perfect instruments for you..."></textarea>
+                <div class="error" id="notesError"></div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="button-group">
+                <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
+                <button type="submit" class="btn-submit">Submit Survey</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Submitting your preferences...</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('surveyForm');
+        const token = localStorage.getItem('access_token'); // Assume token is stored after login
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            // Collect form data
+            const instruments = Array.from(document.querySelectorAll('input[name="instruments"]:checked'))
+                .map(cb => cb.value)
+                .join(',');
+            const genres = Array.from(document.querySelectorAll('input[name="genres"]:checked'))
+                .map(cb => cb.value)
+                .join(',');
+
+            const surveyData = {
+                preferred_instruments: instruments,
+                experience_level: document.querySelector('input[name="experience"]:checked')?.value,
+                favorite_genres: genres,
+                budget_range: document.querySelector('input[name="budget"]:checked')?.value,
+                rental_frequency: document.querySelector('input[name="frequency"]:checked')?.value,
+                use_case: document.querySelector('input[name="usecase"]').value,
+                location: document.querySelector('input[name="location"]').value,
+                additional_notes: document.querySelector('textarea[name="notes"]').value
+            };
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const response = await fetch('/api/survey', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(surveyData)
+                });
+
+                if (response.ok) {
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('successMessage').classList.add('show');
+                    form.style.display = 'none';
+                    
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    showError('submit', error.message || 'Failed to submit survey');
+                    document.getElementById('loading').classList.remove('active');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('submit', 'Network error. Please try again.');
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        function validateForm() {
+            let isValid = true;
+
+            // Clear all errors
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('show'));
+
+            // Validate instruments
+            const instruments = document.querySelectorAll('input[name="instruments"]:checked').length;
+            if (instruments === 0) {
+                showError('instruments', 'Please select at least one instrument');
+                isValid = false;
+            }
+
+            // Validate experience
+            if (!document.querySelector('input[name="experience"]:checked')) {
+                showError('experience', 'Please select your experience level');
+                isValid = false;
+            }
+
+            // Validate genres
+            const genres = document.querySelectorAll('input[name="genres"]:checked').length;
+            if (genres === 0) {
+                showError('genres', 'Please select at least one genre');
+                isValid = false;
+            }
+
+            // Validate budget
+            if (!document.querySelector('input[name="budget"]:checked')) {
+                showError('budget', 'Please select a budget range');
+                isValid = false;
+            }
+
+            // Validate frequency
+            if (!document.querySelector('input[name="frequency"]:checked')) {
+                showError('frequency', 'Please select rental frequency');
+                isValid = false;
+            }
+
+            // Validate use case
+            if (!document.querySelector('input[name="usecase"]').value.trim()) {
+                showError('usecase', 'Please enter your primary use case');
+                isValid = false;
+            }
+
+            // Validate location
+            if (!document.querySelector('input[name="location"]').value.trim()) {
+                showError('location', 'Please enter your location');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(field, message) {
+            const errorEl = document.getElementById(field + 'Error');
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+            }
+        }
+    </script>
+</body>
+</html>

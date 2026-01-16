@@ -5,3 +5,5 @@ Flask-SQLAlchemy
 Flask-Smorest
 psycopg2-binary
 Werkzeug
+stripe>=5.0.0
+python-dotenv
