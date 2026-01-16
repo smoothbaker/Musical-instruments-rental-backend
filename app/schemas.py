@@ -119,3 +119,23 @@ class PaymentListSchema(Schema):
     owner_payout_amount = fields.Float(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     completed_at = fields.DateTime(dump_only=True)
+
+class ReviewSchema(Schema):
+    id = fields.Int(dump_only=True)
+    rental_id = fields.Int(dump_only=True)
+    instru_ownership_id = fields.Int(dump_only=True)
+    renter_id = fields.Int(dump_only=True)
+    rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
+    comment = fields.Str(allow_none=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    renter_name = fields.Str(dump_only=True)
+
+class ReviewCreateSchema(Schema):
+    rental_id = fields.Int(required=True)
+    rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
+    comment = fields.Str(allow_none=True)
+
+class ReviewUpdateSchema(Schema):
+    rating = fields.Int(validate=lambda x: 1 <= x <= 5)
+    comment = fields.Str(allow_none=True)

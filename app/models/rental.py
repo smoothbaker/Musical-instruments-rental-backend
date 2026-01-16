@@ -16,3 +16,4 @@ class Rental(db.Model):
     # Relationships
     user = db.relationship('User', back_populates='rentals')
     instru_ownership = db.relationship('Instru_ownership', back_populates='rentals')
+    review = db.relationship('Review', back_populates='rental', uselist=False, cascade='all, delete-orphan')

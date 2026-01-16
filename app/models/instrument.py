@@ -14,5 +14,4 @@ class Instrument(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    reviews = db.relationship('Review', backref='instrument', lazy=True)
     instru_ownerships = db.relationship('Instru_ownership', back_populates='instrument', lazy=True)

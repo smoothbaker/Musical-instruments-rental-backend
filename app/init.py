@@ -14,11 +14,11 @@ def create_app():
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
     
-    # Initialize API
+    # Initialize API with Swagger/OpenAPI documentation
     api = Api(app)
     
     # Register blueprints
-    from app.routes import auth, instruments, rentals, recommendations, users, instru_ownership, dashboard, survey, payments
+    from app.routes import auth, instruments, rentals, recommendations, users, instru_ownership, dashboard, survey, payments, reviews
     app.register_blueprint(auth.bp)
     app.register_blueprint(instruments.bp)
     app.register_blueprint(rentals.bp)
@@ -28,5 +28,6 @@ def create_app():
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(survey.bp)
     app.register_blueprint(payments.bp)
+    app.register_blueprint(reviews.blp)
     
     return app

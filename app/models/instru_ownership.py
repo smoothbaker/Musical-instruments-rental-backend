@@ -18,4 +18,5 @@ class Instru_ownership(db.Model):
     user = db.relationship('User', back_populates='instru_ownerships')
     instrument = db.relationship('Instrument', back_populates='instru_ownerships')
     rentals = db.relationship('Rental', back_populates='instru_ownership')
+    reviews = db.relationship('Review', back_populates='instru_ownership', cascade='all, delete-orphan')
     
