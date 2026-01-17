@@ -1,393 +1,1795 @@
 {
-  "openapi": "3.0.2",
-  "info": {
-    "title": "Musical Instruments Rental API",
-    "version": "1.0.0",
-    "description": "A REST API for renting musical instruments with AI-powered chatbot assistance",
-    "contact": {
-      "name": "API Support"
-    }
-  },
-  "servers": [
-    {
-      "url": "http://localhost:5000",
-      "description": "Development Server"
-    }
-  ],
-  "tags": [
-    {
-      "name": "Auth",
-      "description": "Authentication endpoints (register, login, refresh)"
-    },
-    {
-      "name": "Instruments",
-      "description": "Manage musical instruments"
-    },
-    {
-      "name": "Rentals",
-      "description": "Manage instrument rentals"
-    },
-    {
-      "name": "Payments",
-      "description": "Payment processing (Stripe integration)"
-    },
-    {
-      "name": "Reviews",
-      "description": "User reviews and ratings"
-    },
-    {
-      "name": "Chatbot",
-      "description": "AI-powered chatbot for instrument recommendations"
-    },
-    {
-      "name": "Dashboard",
-      "description": "User dashboards and analytics"
-    },
-    {
-      "name": "Other",
-      "description": "Survey, recommendations, and other endpoints"
-    }
-  ],
   "paths": {
-    "/": {
-      "get": {
-        "summary": "API Information",
-        "tags": ["Other"],
-        "responses": {
-          "200": {
-            "description": "API information with links to documentation and endpoints"
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "tags": ["Other"],
-        "responses": {
-          "200": {
-            "description": "Service is healthy"
-          }
-        }
-      }
-    },
     "/api/auth/register": {
       "post": {
-        "summary": "Register a new user",
-        "tags": ["Auth"],
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {"type": "string", "format": "email"},
-                  "password": {"type": "string", "minLength": 6},
-                  "name": {"type": "string"},
-                  "user_type": {"type": "string", "enum": ["owner", "renter"]},
-                  "phone": {"type": "string"}
-                },
-                "required": ["email", "password", "name", "user_type"]
+                "$ref": "#/components/schemas/User"
               }
             }
           }
         },
-        "responses": {"201": {"description": "User registered successfully"}}
+        "summary": "Register a new user",
+        "description": "Create a new user account with email, password, and user type.\nReturns the created user object.",
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/auth/login": {
       "post": {
-        "summary": "Login with email and password",
-        "tags": ["Auth"],
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {"type": "string"},
-                  "password": {"type": "string"}
-                },
-                "required": ["email", "password"]
+                "$ref": "#/components/schemas/User1"
               }
             }
           }
         },
-        "responses": {"200": {"description": "Login successful, returns tokens"}}
+        "summary": "User login",
+        "description": "Authenticate user with email and password.\nReturns JWT access and refresh tokens.",
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/api/auth/refresh": {
       "post": {
-        "summary": "Refresh JWT access token",
-        "tags": ["Auth"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "New access token"}}
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Refresh access token",
+        "description": "Use refresh token to obtain a new access token.\nRequires valid refresh token in Authorization header.",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/auth/profile": {
       "get": {
-        "summary": "Get current user profile",
-        "tags": ["Auth"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "User profile"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get user profile",
+        "description": "Retrieve the profile of the currently authenticated user.\nRequires valid access token in Authorization header.",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/instruments": {
       "get": {
-        "summary": "List all instruments",
-        "tags": ["Instruments"],
-        "responses": {"200": {"description": "List of instruments"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Instrument"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all instruments in the catalog",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "post": {
-        "summary": "Create a new instrument",
-        "tags": ["Instruments"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"201": {"description": "Instrument created"}}
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instrument"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Instrument"
+              }
+            }
+          }
+        },
+        "summary": "Create a new instrument in the catalog (any authenticated user)",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/instruments/{instrument_id}": {
       "get": {
-        "summary": "Get instrument details",
-        "tags": ["Instruments"],
-        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Instrument details"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instrument"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get instrument details from catalog",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "put": {
-        "summary": "Update instrument",
-        "tags": ["Instruments"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Instrument updated"}}
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instrument"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Instrument"
+              }
+            }
+          }
+        },
+        "summary": "Update instrument in catalog",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "delete": {
-        "summary": "Delete instrument",
-        "tags": ["Instruments"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"204": {"description": "Deleted"}}
-      }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Delete instrument from catalog",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "instrument_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
     },
     "/api/instruments/available": {
       "get": {
-        "summary": "Get available instruments",
-        "tags": ["Instruments"],
-        "responses": {"200": {"description": "Available instruments"}}
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all available instruments for rent (with ownership details)",
+        "tags": [
+          "instruments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/rentals": {
       "get": {
-        "summary": "List rentals",
-        "tags": ["Rentals"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Rentals list"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rental"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get current user's rentals",
+        "tags": [
+          "rentals"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "post": {
-        "summary": "Create a rental",
-        "tags": ["Rentals"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"201": {"description": "Rental created"}}
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rental"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rental"
+              }
+            }
+          }
+        },
+        "summary": "Create a new rental",
+        "tags": [
+          "rentals"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/rentals/{rental_id}": {
       "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rental"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
         "summary": "Get rental details",
-        "tags": ["Rentals"],
-        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Rental details"}}
+        "tags": [
+          "rentals"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "delete": {
-        "summary": "Cancel rental",
-        "tags": ["Rentals"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"204": {"description": "Cancelled"}}
-      }
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Cancel rental (if still pending)",
+        "tags": [
+          "rentals"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "rental_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
     },
     "/api/rentals/{rental_id}/return": {
       "post": {
-        "summary": "Return instrument",
-        "tags": ["Rentals"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Returned"}}
-      }
-    },
-    "/api/payments": {
-      "get": {
-        "summary": "Get payments",
-        "tags": ["Payments"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Payments list"}}
-      }
-    },
-    "/api/payments/{rental_id}/initiate": {
-      "post": {
-        "summary": "Initiate payment",
-        "tags": ["Payments"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Payment initiated"}}
-      }
-    },
-    "/api/payments/{rental_id}/confirm": {
-      "post": {
-        "summary": "Confirm payment",
-        "tags": ["Payments"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Confirmed"}}
-      }
-    },
-    "/api/payments/{payment_id}/refund": {
-      "post": {
-        "summary": "Process refund",
-        "tags": ["Payments"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Refund processed"}}
-      }
-    },
-    "/api/reviews": {
-      "get": {
-        "summary": "List reviews",
-        "tags": ["Reviews"],
-        "responses": {"200": {"description": "Reviews list"}}
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Return rental",
+        "tags": [
+          "rentals"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
-      "post": {
-        "summary": "Create review",
-        "tags": ["Reviews"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"201": {"description": "Review created"}}
-      }
-    },
-    "/api/reviews/{review_id}": {
-      "get": {
-        "summary": "Get review",
-        "tags": ["Reviews"],
-        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Review"}}
-      },
-      "put": {
-        "summary": "Update review",
-        "tags": ["Reviews"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Updated"}}
-      },
-      "delete": {
-        "summary": "Delete review",
-        "tags": ["Reviews"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"204": {"description": "Deleted"}}
-      }
-    },
-    "/api/chatbot/chat": {
-      "post": {
-        "summary": "Chat with chatbot",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Chatbot response"}}
-      }
-    },
-    "/api/chatbot/ask-instrument-question": {
-      "post": {
-        "summary": "Ask instrument question",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Answer"}}
-      }
-    },
-    "/api/chatbot/recommend-for-me": {
-      "post": {
-        "summary": "Get recommendations",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Recommendations"}}
-      }
-    },
-    "/api/chatbot/sessions": {
-      "get": {
-        "summary": "Get sessions",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Sessions"}}
-      }
-    },
-    "/api/chatbot/history/{session_id}": {
-      "get": {
-        "summary": "Get chat history",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "responses": {"200": {"description": "History"}}
-      }
-    },
-    "/api/chatbot/clear-session/{session_id}": {
-      "delete": {
-        "summary": "Clear session",
-        "tags": ["Chatbot"],
-        "security": [{"BearerAuth": []}],
-        "parameters": [{"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}],
-        "responses": {"204": {"description": "Cleared"}}
-      }
-    },
-    "/api/dashboard/owner": {
-      "get": {
-        "summary": "Owner dashboard",
-        "tags": ["Dashboard"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Dashboard data"}}
-      }
-    },
-    "/api/dashboard/renter": {
-      "get": {
-        "summary": "Renter dashboard",
-        "tags": ["Dashboard"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Dashboard data"}}
-      }
+      "parameters": [
+        {
+          "in": "path",
+          "name": "rental_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
     },
     "/api/recommendations": {
       "get": {
-        "summary": "Get recommendations",
-        "tags": ["Other"],
-        "security": [{"BearerAuth": []}],
-        "responses": {"200": {"description": "Recommendations"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Instrument"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get personalized recommendations",
+        "description": "Get instrument recommendations based on rental history and ratings.\nRecommends similar instruments to what you've rented, most popular instruments,\nand highest-rated instruments.",
+        "tags": [
+          "recommendations"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/users": {
       "get": {
-        "summary": "List users",
-        "tags": ["Other"],
-        "responses": {"200": {"description": "Users"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "post": {
-        "summary": "Create user",
-        "tags": ["Other"],
-        "responses": {"201": {"description": "Created"}}
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
     },
     "/api/users/{user_id}": {
       "get": {
-        "summary": "Get user",
-        "tags": ["Other"],
-        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "User"}}
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "put": {
-        "summary": "Update user",
-        "tags": ["Other"],
-        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"200": {"description": "Updated"}}
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       },
       "delete": {
-        "summary": "Delete user",
-        "tags": ["Other"],
-        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
-        "responses": {"204": {"description": "Deleted"}}
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "tags": [
+          "users"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "user_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/instru-ownership": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstruOwnership"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all available instruments for rent (public)",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstruOwnership"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstruOwnership"
+              }
+            }
+          }
+        },
+        "summary": "Create a new instrument ownership (owners only)",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
       }
+    },
+    "/api/instru-ownership/my-instruments": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstruOwnership"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get current user's owned instruments (owners only)",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/instru-ownership/{ownership_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstruOwnership"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get specific instrument ownership details",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstruOwnership"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstruOwnershipUpdate"
+              }
+            }
+          }
+        },
+        "summary": "Update instrument ownership (owner only)",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Delete instrument ownership (owner only)",
+        "tags": [
+          "instru_ownership"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "ownership_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/dashboard/stats": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get general dashboard statistics for the current user",
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/renter": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get renter's rental history and statistics",
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/dashboard/owner": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get owner's instrument ownership and rental statistics",
+        "tags": [
+          "dashboard"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/survey": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get current user's survey response",
+        "tags": [
+          "survey"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyResponse"
+              }
+            }
+          }
+        },
+        "summary": "Create survey response after user registration",
+        "tags": [
+          "survey"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/survey/{survey_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get survey response by ID",
+        "tags": [
+          "survey"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyResponseUpdate"
+              }
+            }
+          }
+        },
+        "summary": "Update survey response",
+        "tags": [
+          "survey"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Delete survey response",
+        "tags": [
+          "survey"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "survey_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/payments": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentList"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get current user's payments (as renter or owner)",
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/payments/{rental_id}/initiate": {
+      "post": {
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInitiate"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Initiate a payment for a rental - returns Stripe client secret",
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "rental_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/payments/{rental_id}/confirm": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentConfirm"
+              }
+            }
+          }
+        },
+        "summary": "Confirm payment after client-side Stripe processing",
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "rental_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/payments/{rental_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get payment details for a rental",
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "rental_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/payments/{payment_id}/refund": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Refund a completed payment (renters can request, owners can issue)",
+        "tags": [
+          "payments"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "payment_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/reviews/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Review"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all reviews with optional filtering",
+        "description": "Query Parameters:\n- instru_ownership_id: Filter by specific owned instrument copy\n- rating: Filter by rating (1-5)",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCreate"
+              }
+            }
+          }
+        },
+        "summary": "Create a review for a completed rental",
+        "description": "Renters can only review their own completed rentals.\nEach rental can only have one review.\nThe review is attached to the specific instrument copy (Instru_ownership).",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reviews/{review_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get a specific review",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewUpdate"
+              }
+            }
+          }
+        },
+        "summary": "Update a review (renter only)",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Delete a review (renter only)",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "review_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/reviews/ownership/{instru_ownership_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get ownership details with all reviews and statistics",
+        "description": "Returns:\n- ownership: Instrument, owner, condition, rate\n- reviews: All reviews from renters who rented this specific copy\n- stats: Average rating, total count, distribution by rating",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "instru_ownership_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/reviews/owner/{owner_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all owned instruments with their reviews and stats",
+        "description": "Shows all instrument copies owned by the owner, each with its own review list.",
+        "tags": [
+          "reviews"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "owner_id",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    "/api/chatbot/chat": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatQuery"
+              }
+            }
+          }
+        },
+        "summary": "Send a message to the chatbot and get a response",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/chatbot/history/{session_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessage"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all messages in a conversation session",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "session_id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "/api/chatbot/sessions": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get all session IDs for the current user",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/chatbot/ask-instrument-question": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatQuery"
+              }
+            }
+          }
+        },
+        "summary": "Ask the chatbot about instruments and get recommendations",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/chatbot/recommend-for-me": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatQuery"
+              }
+            }
+          }
+        },
+        "summary": "Get personalized instrument recommendations",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/chatbot/clear-session/{session_id}": {
+      "delete": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Delete all messages in a conversation session",
+        "tags": [
+          "chatbot"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "session_id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
     }
   },
+  "info": {
+    "title": "Musical Instruments Rental API",
+    "version": "v1.0.0"
+  },
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "instruments",
+      "description": "Instrument catalog endpoints"
+    },
+    {
+      "name": "rentals",
+      "description": "Rental management endpoints"
+    },
+    {
+      "name": "recommendations",
+      "description": "Recommendation endpoints"
+    },
+    {
+      "name": "users",
+      "description": "User management endpoints"
+    },
+    {
+      "name": "instru_ownership",
+      "description": ""
+    },
+    {
+      "name": "dashboard",
+      "description": ""
+    },
+    {
+      "name": "survey",
+      "description": ""
+    },
+    {
+      "name": "payments",
+      "description": "Payment processing endpoints"
+    },
+    {
+      "name": "reviews",
+      "description": "Operations on reviews"
+    },
+    {
+      "name": "chatbot",
+      "description": "Chatbot endpoints"
+    }
+  ],
+  "openapi": "3.0.3",
   "components": {
     "schemas": {
       "Error": {
@@ -439,15 +1841,679 @@
           }
         },
         "additionalProperties": false
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "user_type": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "email",
+          "name",
+          "password",
+          "user_type"
+        ],
+        "title": "User",
+        "additionalProperties": false
+      },
+      "User1": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "User",
+        "additionalProperties": false
+      },
+      "Instrument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "category",
+          "name"
+        ],
+        "title": "Instrument",
+        "additionalProperties": false
+      },
+      "InstruOwnership": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "instrument_id": {
+            "type": "integer"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "daily_rate": {
+            "type": "number"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "is_available": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "instrument": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Instrument"
+              }
+            ]
+          }
+        },
+        "required": [
+          "daily_rate",
+          "instrument_id"
+        ],
+        "title": "InstruOwnership",
+        "additionalProperties": false
+      },
+      "Rental": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "instru_ownership_id": {
+            "type": "integer"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "actual_return_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "total_cost": {
+            "type": "number",
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "instru_ownership": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstruOwnership"
+              }
+            ]
+          }
+        },
+        "required": [
+          "end_date",
+          "instru_ownership_id",
+          "start_date"
+        ],
+        "title": "Rental",
+        "additionalProperties": false
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "user_type": {
+            "type": "string"
+          }
+        },
+        "title": "UserUpdate",
+        "additionalProperties": false
+      },
+      "InstruOwnershipUpdate": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "daily_rate": {
+            "type": "number"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "is_available": {
+            "type": "boolean"
+          }
+        },
+        "title": "InstruOwnershipUpdate",
+        "additionalProperties": false
+      },
+      "SurveyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "preferred_instruments": {
+            "type": "string",
+            "nullable": true
+          },
+          "experience_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "favorite_genres": {
+            "type": "string",
+            "nullable": true
+          },
+          "budget_range": {
+            "type": "string",
+            "nullable": true
+          },
+          "rental_frequency": {
+            "type": "string",
+            "nullable": true
+          },
+          "use_case": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "additional_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "title": "SurveyResponse",
+        "additionalProperties": false
+      },
+      "SurveyResponseUpdate": {
+        "type": "object",
+        "properties": {
+          "preferred_instruments": {
+            "type": "string"
+          },
+          "experience_level": {
+            "type": "string"
+          },
+          "favorite_genres": {
+            "type": "string"
+          },
+          "budget_range": {
+            "type": "string"
+          },
+          "rental_frequency": {
+            "type": "string"
+          },
+          "use_case": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "additional_notes": {
+            "type": "string"
+          }
+        },
+        "title": "SurveyResponseUpdate",
+        "additionalProperties": false
+      },
+      "PaymentList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "rental_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "amount": {
+            "type": "number",
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "owner_payout_amount": {
+            "type": "number",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentInitiate": {
+        "type": "object",
+        "properties": {
+          "rental_id": {
+            "type": "integer"
+          },
+          "client_secret": {
+            "type": "string",
+            "readOnly": true
+          },
+          "amount": {
+            "type": "number",
+            "readOnly": true
+          },
+          "currency": {
+            "type": "string",
+            "readOnly": true
+          },
+          "stripe_public_key": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "rental_id"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentConfirm": {
+        "type": "object",
+        "properties": {
+          "rental_id": {
+            "type": "integer"
+          },
+          "stripe_payment_intent_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rental_id",
+          "stripe_payment_intent_id"
+        ],
+        "additionalProperties": false
+      },
+      "Payment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "rental_id": {
+            "type": "integer"
+          },
+          "renter_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "owner_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "amount": {
+            "type": "number",
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "payment_method": {
+            "type": "string",
+            "readOnly": true
+          },
+          "transaction_fee": {
+            "type": "number",
+            "readOnly": true
+          },
+          "owner_payout_amount": {
+            "type": "number",
+            "readOnly": true
+          },
+          "error_message": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "rental_id"
+        ],
+        "additionalProperties": false
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "rental_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "instru_ownership_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "renter_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "rating": {
+            "type": "integer"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "renter_name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "rating"
+        ],
+        "title": "Review",
+        "additionalProperties": false
+      },
+      "ReviewCreate": {
+        "type": "object",
+        "properties": {
+          "instru_ownership_id": {
+            "type": "integer"
+          },
+          "rating": {
+            "type": "integer"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "instru_ownership_id",
+          "rating"
+        ],
+        "title": "ReviewCreate",
+        "additionalProperties": false
+      },
+      "ReviewUpdate": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "title": "ReviewUpdate",
+        "additionalProperties": false
+      },
+      "ChatQuery": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ChatResponse": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string"
+          },
+          "user_message": {
+            "type": "string"
+          },
+          "assistant_response": {
+            "type": "string"
+          },
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "message_type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "content": {
+            "type": "string"
+          },
+          "context_data": {
+            "type": "object",
+            "readOnly": true,
+            "additionalProperties": {}
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "content",
+          "session_id"
+        ],
+        "additionalProperties": false
       }
-    }
-  },
-  "securitySchemes": {
-    "BearerAuth": {
-      "type": "http",
-      "scheme": "bearer",
-      "bearerFormat": "JWT",
-      "description": "JWT access token. Get it by calling /api/auth/login with email and password"
+    },
+    "responses": {
+      "UNPROCESSABLE_ENTITY": {
+        "description": "Unprocessable Entity",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "DEFAULT_ERROR": {
+        "description": "Default error response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT authentication token. Obtain from /api/auth/login. Click 'Authorize' and enter: Bearer <your-token>"
+      }
     }
   }
 }

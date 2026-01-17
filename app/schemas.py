@@ -34,6 +34,18 @@ class InstrumentSchema(Schema):
     image_url = fields.Str()
     created_at = fields.DateTime(dump_only=True)
 
+class InstrumentUpdateSchema(Schema):
+    """Schema for updating instruments with all optional fields"""
+    class Meta:
+        title = "InstrumentUpdate"
+    
+    name = fields.Str()
+    category = fields.Str()
+    brand = fields.Str()
+    model = fields.Str()
+    description = fields.Str()
+    image_url = fields.Str()
+
 class InstruOwnershipSchema(Schema):
     class Meta:
         title = "InstruOwnership"
@@ -162,7 +174,7 @@ class ReviewCreateSchema(Schema):
     class Meta:
         title = "ReviewCreate"
     
-    rental_id = fields.Int(required=True)
+    instru_ownership_id = fields.Int(required=True)  # Fixed: was rental_id
     rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
     comment = fields.Str(allow_none=True)
 
@@ -184,7 +196,7 @@ class ChatMessageSchema(Schema):
 
 class ChatQuerySchema(Schema):
     """Schema for user queries to the chatbot"""
-    session_id = fields.Str(required=True)  # To group messages in a conversation
+    session_id = fields.Str(required=False, allow_none=True)  # Optional, will be auto-generated if not provided
     message = fields.Str(required=True)
 
 class ChatResponseSchema(Schema):

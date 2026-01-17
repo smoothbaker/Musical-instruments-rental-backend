@@ -226,25 +226,34 @@ def chat_with_user(user_id: int, session_id: str, user_message: str) -> Dict:
         available_instruments = get_available_instruments()
         conversation_history = get_conversation_history(session_id, user_id)
         
-        # Get the chain (lazy-loaded)
-        chain = get_chain()
-        
-        # Get response from the model
-        response = chain.invoke({"context": conversation_history, 
-                                "experience_level": user_profile.get('experience_level', 'beginner'),
-                                "preferred_instruments": user_profile.get('preferred_instruments', 'Not specified'),
-                                "favorite_genres": user_profile.get('favorite_genres', 'Not specified'),
-                                "budget_range": user_profile.get('budget_range', 'Not specified'),
-                                "rental_frequency": user_profile.get('rental_frequency', 'Not specified'),
-                                "use_case": user_profile.get('use_case', 'Not specified'),
-                                "available_instruments": available_instruments,
-                                "question": user_message})
-        
-        # Extract recommendations from response
-        recommendations = extract_recommendations(response)
-        
-        # Clean response by removing recommendation blocks
-        clean_response = response.split("[RECOMMENDATIONS]")[0].strip()
+        # Try to use Ollama LLM first
+        try:
+            # Get the chain (lazy-loaded)
+            chain = get_chain()
+            
+            # Get response from the model
+            response = chain.invoke({"context": conversation_history, 
+                                    "experience_level": user_profile.get('experience_level', 'beginner'),
+                                    "preferred_instruments": user_profile.get('preferred_instruments', 'Not specified'),
+                                    "favorite_genres": user_profile.get('favorite_genres', 'Not specified'),
+                                    "budget_range": user_profile.get('budget_range', 'Not specified'),
+                                    "rental_frequency": user_profile.get('rental_frequency', 'Not specified'),
+                                    "use_case": user_profile.get('use_case', 'Not specified'),
+                                    "available_instruments": available_instruments,
+                                    "question": user_message})
+            
+            # Extract recommendations from response
+            recommendations = extract_recommendations(response)
+            
+            # Clean response by removing recommendation blocks
+            clean_response = response.split("[RECOMMENDATIONS]")[0].strip()
+            
+        except (RuntimeError, Exception) as e:
+            # Fallback to rule-based chatbot if Ollama is not available
+            print(f"Ollama unavailable, using fallback chatbot: {str(e)}")
+            clean_response, recommendations = fallback_chatbot_response(
+                user_message, user_profile, available_instruments
+            )
         
         # Save messages to database
         user_msg = ChatMessage(
@@ -288,6 +297,160 @@ def chat_with_user(user_id: int, session_id: str, user_message: str) -> Dict:
             'error': str(e),
             'assistant_response': f"I apologize, but I encountered an error processing your request. Please try again."
         }
+
+
+def fallback_chatbot_response(user_message: str, user_profile: Dict, available_instruments: str) -> Tuple[str, List[Dict]]:
+    """
+    Fallback rule-based chatbot when Ollama is unavailable.
+    
+    Args:
+        user_message: User's question
+        user_profile: User profile data
+        available_instruments: Available instruments string
+        
+    Returns:
+        Tuple of (response_text, recommendations_list)
+    """
+    message_lower = user_message.lower()
+    recommendations = []
+    
+    # Extract experience level and budget
+    experience = user_profile.get('experience_level', 'beginner')
+    budget_range = user_profile.get('budget_range', 'Not specified')
+    preferred = user_profile.get('preferred_instruments', '').lower()
+    
+    # Recommendation keywords
+    recommendation_keywords = ['recommend', 'suggest', 'what should', 'which instrument', 
+                               'best for me', 'looking for', 'want to', 'interested in']
+    
+    # Check if user is asking for recommendations
+    is_recommendation_request = any(keyword in message_lower for keyword in recommendation_keywords)
+    
+    if is_recommendation_request:
+        # Build personalized recommendations based on profile
+        response = f"Based on your profile (experience level: {experience}), I'd be happy to recommend some instruments!\n\n"
+        
+        # Parse available instruments
+        try:
+            instruments_data = []
+            if "Available Instruments:" in available_instruments:
+                lines = available_instruments.split('\n')[1:]  # Skip header
+                for line in lines:
+                    if line.strip() and line.startswith('-'):
+                        # Parse instrument info
+                        instruments_data.append(line.strip('- '))
+            
+            # Filter and recommend based on experience and budget
+            if experience == 'beginner':
+                response += "As a beginner, I recommend starting with instruments that are:\n"
+                response += "- Easy to learn and forgiving\n"
+                response += "- Affordable to rent\n"
+                response += "- Widely available\n\n"
+                
+                # Recommend guitars for beginners
+                guitar_instruments = [inst for inst in instruments_data if 'guitar' in inst.lower()]
+                if guitar_instruments:
+                    response += "Perfect starter options:\n"
+                    for inst in guitar_instruments[:3]:
+                        name = inst.split('(')[0].strip()
+                        response += f"- {name}\n"
+                        recommendations.append({
+                            'name': name,
+                            'reason': 'Great for beginners, easy to learn'
+                        })
+
+            
+            elif experience == 'intermediate' or experience == 'advanced':
+                response += f"As an {experience} player, you might enjoy:\n"
+                # Recommend based on preferred instruments if specified
+                if preferred and preferred != 'not specified':
+                    matching_instruments = [inst for inst in instruments_data 
+                                           if any(pref in inst.lower() for pref in preferred.split(','))]
+                    if matching_instruments:
+                        for inst in matching_instruments[:5]:
+                            name = inst.split('(')[0].strip()
+                            response += f"- {name}\n"
+                            recommendations.append({
+                                'name': name,
+                                'reason': f'Matches your preference for {preferred}'
+                            })
+                else:
+                    # Show variety
+                    for inst in instruments_data[:5]:
+                        name = inst.split('(')[0].strip()
+                        response += f"- {name}\n"
+                        recommendations.append({
+                            'name': name,
+                            'reason': f'Suitable for {experience} players'
+                        })
+            
+            if not recommendations:
+                response += "Unfortunately, we don't have instruments matching your exact preferences right now, but here's what's available:\n"
+                for inst in instruments_data[:5]:
+                    name = inst.split('(')[0].strip()
+                    response += f"- {name}\n"
+        
+        except Exception as e:
+            response += "Check out our available instruments in the catalog!"
+        
+        response += "\n\nWould you like more details about any specific instrument?"
+    
+    # General questions about instruments
+    elif 'guitar' in message_lower:
+        response = "Guitars are wonderful instruments! They're versatile and great for many music styles.\n\n"
+        if experience == 'beginner':
+            response += "For beginners, I recommend starting with an acoustic guitar. It's easier on the fingers and helps build good technique.\n\n"
+        response += "We have several guitars available for rent. Would you like me to show you our guitar options based on your budget?"
+        
+    elif 'piano' in message_lower or 'keyboard' in message_lower:
+        response = "Pianos and keyboards are excellent choices! They provide a strong foundation for understanding music theory.\n\n"
+        if experience == 'beginner':
+            response += "As a beginner, a keyboard might be more practical - it's portable and usually more affordable to rent.\n\n"
+        response += "Let me know if you'd like recommendations based on your specific needs!"
+        
+    elif 'drums' in message_lower:
+        response = "Drums are fantastic for rhythm and coordination! \n\n"
+        if experience == 'beginner':
+            response += "Beginners often start with practice pads before moving to full kits. Would you like to explore our drum options?"
+        else:
+            response += "Check out our available drum kits - we have options for all skill levels!"
+    
+    # Budget questions
+    elif 'cost' in message_lower or 'price' in message_lower or 'budget' in message_lower:
+        response = "Our rental prices vary based on the instrument and condition:\n\n"
+        response += "You can find instruments ranging from $25/day to $100+/day.\n"
+        if budget_range != 'Not specified':
+            response += f"\nBased on your budget range (${budget_range}/day), I can help you find suitable options. Just let me know what type of instrument you're interested in!"
+        else:
+            response += "\nWhat's your budget range? I can help you find the perfect instrument within your price range."
+    
+    # Help/general questions  
+    elif any(word in message_lower for word in ['help', 'how', 'what', 'hello', '  hi']):
+        response = f"Hello! I'm your musical instruments rental assistant. 👋\n\n"
+        response += "I can help you with:\n"
+        response += "- Finding the perfect instrument based on your experience and budget\n"
+        response += "- Answering questions about specific instruments\n"
+        response += "- Providing rental information and pricing\n"
+        response += "- Giving tips for beginners\n\n"
+        response += f"I see you're a {experience} player. "
+        response += "What instrument are you interested in learning or renting?"
+    
+    # Default response
+    else:
+        response = "That's an interesting question! I'd be happy to help you find the right instrument.\n\n"
+        response += f"Based on your profile:\n"
+        response += f"- Experience: {experience}\n"
+        if budget_range != 'Not specified':
+            response += f"- Budget: ${budget_range}/day\n"
+        response += "\nCould you tell me more about what you're looking for? Are you interested in:\n"
+        response += "- String instruments (guitar, violin, etc.)\n"
+        response += "- Keyboards/pianos\n"
+        response += "- Percussion (drums)\n"
+        response += "- Wind instruments\n\n"
+        response += "Or would you like me to recommend something based on your profile?"
+    
+    return response, recommendations
+
 
 
 def get_session_history(user_id: int, session_id: str) -> List[Dict]:

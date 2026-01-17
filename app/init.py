@@ -1,4 +1,4 @@
-from flask import Flask, redirect, jsonify
+from flask import Flask, app, redirect, jsonify
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS  # Add CORS support for frontend
 from app.db import db
@@ -7,7 +7,7 @@ from flask_smorest import Api
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    app.config.from_object(Config)  
     
     # Initialize extensions
     db.init_app(app)
