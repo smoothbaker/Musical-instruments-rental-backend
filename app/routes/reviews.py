@@ -51,9 +51,11 @@ class ReviewList(MethodView):
         
         # Check if rental exists
         rental = Rental.query.get_or_404(rental_id, description='Rental not found')
-        
+
+        print(f"Renter ID: {renter_id}, Rental ID: {rental_id}, Rental User ID: {rental.user_id}, Rental Status: {rental.status}")
+
         # Verify the user is the renter
-        if rental.user_id != renter_id:
+        if rental.user_id != int(renter_id):
             abort(403, message='Can only review your own rentals')
         
         # Check if rental is completed

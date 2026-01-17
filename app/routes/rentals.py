@@ -91,6 +91,27 @@ class RentalResource(MethodView):
         db.session.delete(rental)
         db.session.commit()
 
+@blp.route('/<int:rental_id>/accept')
+class AcceptRental(MethodView):
+    @blp.response(200, RentalSchema)
+    @jwt_required()
+    def post(self, rental_id):
+        """Accept rental request (Owner only) - Changes status from pending to active"""
+        user_id = int(get_jwt_identity())
+        rental = Rental.query.get_or_404(rental_id)
+
+        # Verify owner is accepting their own rental
+        if rental.instru_ownership.user_id != user_id:
+            abort(403, message="Only the instrument owner can accept rental requests")
+
+        if rental.status != 'pending':
+            abort(400, message="Only pending rentals can be accepted")
+
+        rental.status = 'active'
+        db.session.commit()
+
+        return rental
+
 @blp.route('/<int:rental_id>/return')
 class ReturnRental(MethodView):
     @blp.response(200)

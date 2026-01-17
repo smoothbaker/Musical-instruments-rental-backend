@@ -4,6 +4,11 @@ from flask_cors import CORS  # Add CORS support for frontend
 from app.db import db
 from app.config import Config
 from flask_smorest import Api
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)

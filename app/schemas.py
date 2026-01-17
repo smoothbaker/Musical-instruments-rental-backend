@@ -175,6 +175,7 @@ class ReviewCreateSchema(Schema):
         title = "ReviewCreate"
     
     instru_ownership_id = fields.Int(required=True)  # Fixed: was rental_id
+    rental_id = fields.Int(required=True)
     rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
     comment = fields.Str(allow_none=True)
 
