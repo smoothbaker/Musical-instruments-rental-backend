@@ -1,5 +1,6 @@
 from flask import Flask, redirect, jsonify
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS  # Add CORS support for frontend
 from app.db import db
 from app.config import Config
 from flask_smorest import Api
@@ -10,6 +11,9 @@ def create_app():
     
     # Initialize extensions
     db.init_app(app)
+    
+    # Enable CORS for all routes (required for frontend to connect)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     
     # Optional: Initialize Flask-Migrate for migrations
     try:
