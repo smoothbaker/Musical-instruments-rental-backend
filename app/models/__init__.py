@@ -6,5 +6,6 @@ from app.models.user import User
 from app.models.instru_ownership import Instru_ownership
 from app.models.survey_response import SurveyResponse
 from app.models.payment import Payment
+from app.models.chat_message import ChatMessage
 
-__all__ = ['db', 'Instrument', 'Rental', 'Review', 'User', 'Instru_ownership', 'SurveyResponse', 'Payment']
+__all__ = ['db', 'Instrument', 'Rental', 'Review', 'User', 'Instru_ownership', 'SurveyResponse', 'Payment', 'ChatMessage']

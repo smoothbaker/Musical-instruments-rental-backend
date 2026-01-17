@@ -139,3 +139,26 @@ class ReviewCreateSchema(Schema):
 class ReviewUpdateSchema(Schema):
     rating = fields.Int(validate=lambda x: 1 <= x <= 5)
     comment = fields.Str(allow_none=True)
+
+class ChatMessageSchema(Schema):
+    id = fields.Int(dump_only=True)
+    user_id = fields.Int(dump_only=True)
+    session_id = fields.Str(required=True)
+    message_type = fields.Str(dump_only=True)  # 'user' or 'assistant'
+    content = fields.Str(required=True)
+    context_data = fields.Dict(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+
+class ChatQuerySchema(Schema):
+    """Schema for user queries to the chatbot"""
+    session_id = fields.Str(required=True)  # To group messages in a conversation
+    message = fields.Str(required=True)
+
+class ChatResponseSchema(Schema):
+    """Schema for chatbot responses"""
+    session_id = fields.Str()
+    user_message = fields.Str()
+    assistant_response = fields.Str()
+    recommendations = fields.List(fields.Dict())  # List of recommended instruments
+    context = fields.Dict()  # Context data used for response
+    created_at = fields.DateTime()

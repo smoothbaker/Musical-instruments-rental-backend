@@ -2,7 +2,6 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from app.db import db
 from app.config import Config
-from flask_migrate import Migrate
 from flask_smorest import Api
 
 def create_app():
@@ -11,14 +10,21 @@ def create_app():
     
     # Initialize extensions
     db.init_app(app)
-    migrate = Migrate(app, db)
+    
+    # Optional: Initialize Flask-Migrate for migrations
+    try:
+        from flask_migrate import Migrate
+        migrate = Migrate(app, db)
+    except ImportError:
+        pass  # Migrations not required for basic app
+    
     jwt = JWTManager(app)
     
     # Initialize API with Swagger/OpenAPI documentation
     api = Api(app)
     
     # Register blueprints
-    from app.routes import auth, instruments, rentals, recommendations, users, instru_ownership, dashboard, survey, payments, reviews
+    from app.routes import auth, instruments, rentals, recommendations, users, instru_ownership, dashboard, survey, payments, reviews, chatbot
     app.register_blueprint(auth.bp)
     app.register_blueprint(instruments.bp)
     app.register_blueprint(rentals.bp)
@@ -29,5 +35,6 @@ def create_app():
     app.register_blueprint(survey.bp)
     app.register_blueprint(payments.bp)
     app.register_blueprint(reviews.blp)
+    app.register_blueprint(chatbot.blp)
     
     return app
