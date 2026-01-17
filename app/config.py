@@ -20,7 +20,7 @@ class Config:
     # Swagger UI Configuration
     OPENAPI_URL_PREFIX = "/"
     OPENAPI_SWAGGER_UI_PATH = "/swagger-ui"
-    OPENAPI_SWAGGER_UI_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+    OPENAPI_SWAGGER_UI_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/"
     OPENAPI_REDOC_PATH = "/redoc"
     OPENAPI_REDOC_URL = "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"
     
@@ -68,16 +68,11 @@ class Config:
     }
     
     # Server URLs for Swagger
-    SERVERS = [
-        {
+    SERVERS = {
             "url": "http://localhost:5000",
             "description": "Development Server"
         },
-        {
-            "url": "https://api.example.com",
-            "description": "Production Server"
-        }
-    ]
+
     
     # Swagger UI Configuration
     OPENAPI_JSON_PATH = "/swagger.json"  # Path to OpenAPI spec JSON

@@ -5,19 +5,19 @@ from app.db import db
 from app.models import User
 from app.schemas import UserSchema, UserUpdateSchema
 
-bp = Blueprint('users', __name__, url_prefix='/api/users')
+blp = Blueprint('users', __name__, url_prefix='/api/users', description='User management endpoints')
 
-@bp.route('')
+@blp.route('')
 class UserList(MethodView):
-    @bp.response(200, UserSchema(many=True))
+    @blp.response(200, UserSchema(many=True))
     @jwt_required()
     def get(self):
         # For now, allow any authenticated user to list users, but in production, add admin check
         users = User.query.all()
         return users
 
-    @bp.arguments(UserSchema)
-    @bp.response(201, UserSchema)
+    @blp.arguments(UserSchema)
+    @blp.response(201, UserSchema)
     @jwt_required()
     def post(self, user_data):
         # For now, allow any authenticated user to create users, but in production, add admin check
@@ -36,16 +36,16 @@ class UserList(MethodView):
         db.session.commit()
         return user
 
-@bp.route('/<int:user_id>')
+@blp.route('/<int:user_id>')
 class UserResource(MethodView):
-    @bp.response(200, UserSchema)
+    @blp.response(200, UserSchema)
     @jwt_required()
     def get(self, user_id):
         user = User.query.get_or_404(user_id)
         return user
 
-    @bp.arguments(UserUpdateSchema)
-    @bp.response(200, UserSchema)
+    @blp.arguments(UserUpdateSchema)
+    @blp.response(200, UserSchema)
     @jwt_required()
     def put(self, user_data, user_id):
         user = User.query.get_or_404(user_id)
@@ -54,7 +54,7 @@ class UserResource(MethodView):
         db.session.commit()
         return user
 
-    @bp.response(204)
+    @blp.response(204)
     @jwt_required()
     def delete(self, user_id):
         user = User.query.get_or_404(user_id)

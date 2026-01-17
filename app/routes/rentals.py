@@ -6,12 +6,12 @@ from app.models import Rental, Instru_ownership
 from app.schemas import RentalSchema
 from datetime import datetime
 
-bp = Blueprint('rentals', __name__, url_prefix='/api/rentals')
+blp = Blueprint('rentals', __name__, url_prefix='/api/rentals', description='Rental management endpoints')
 
-@bp.route('')
+@blp.route('')
 class RentalList(MethodView):
-    @bp.arguments(RentalSchema)
-    @bp.response(201, RentalSchema)
+    @blp.arguments(RentalSchema)
+    @blp.response(201, RentalSchema)
     @jwt_required()
     def post(self, rental_data):
         """Create a new rental"""
@@ -50,7 +50,7 @@ class RentalList(MethodView):
 
         return rental
 
-    @bp.response(200, RentalSchema(many=True))
+    @blp.response(200, RentalSchema(many=True))
     @jwt_required()
     def get(self):
         """Get current user's rentals"""
@@ -58,9 +58,9 @@ class RentalList(MethodView):
         rentals = Rental.query.filter_by(user_id=user_id).all()
         return rentals
 
-@bp.route('/<int:rental_id>')
+@blp.route('/<int:rental_id>')
 class RentalResource(MethodView):
-    @bp.response(200, RentalSchema)
+    @blp.response(200, RentalSchema)
     @jwt_required()
     def get(self, rental_id):
         """Get rental details"""
@@ -72,7 +72,7 @@ class RentalResource(MethodView):
 
         return rental
 
-    @bp.response(204)
+    @blp.response(204)
     @jwt_required()
     def delete(self, rental_id):
         """Cancel rental (if still pending)"""
@@ -91,9 +91,9 @@ class RentalResource(MethodView):
         db.session.delete(rental)
         db.session.commit()
 
-@bp.route('/<int:rental_id>/return')
+@blp.route('/<int:rental_id>/return')
 class ReturnRental(MethodView):
-    @bp.response(200)
+    @blp.response(200)
     @jwt_required()
     def post(self, rental_id):
         """Return rental"""

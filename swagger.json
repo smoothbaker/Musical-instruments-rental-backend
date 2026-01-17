@@ -1,0 +1,453 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Musical Instruments Rental API",
+    "version": "1.0.0",
+    "description": "A REST API for renting musical instruments with AI-powered chatbot assistance",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints (register, login, refresh)"
+    },
+    {
+      "name": "Instruments",
+      "description": "Manage musical instruments"
+    },
+    {
+      "name": "Rentals",
+      "description": "Manage instrument rentals"
+    },
+    {
+      "name": "Payments",
+      "description": "Payment processing (Stripe integration)"
+    },
+    {
+      "name": "Reviews",
+      "description": "User reviews and ratings"
+    },
+    {
+      "name": "Chatbot",
+      "description": "AI-powered chatbot for instrument recommendations"
+    },
+    {
+      "name": "Dashboard",
+      "description": "User dashboards and analytics"
+    },
+    {
+      "name": "Other",
+      "description": "Survey, recommendations, and other endpoints"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "API Information",
+        "tags": ["Other"],
+        "responses": {
+          "200": {
+            "description": "API information with links to documentation and endpoints"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "tags": ["Other"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string", "minLength": 6},
+                  "name": {"type": "string"},
+                  "user_type": {"type": "string", "enum": ["owner", "renter"]},
+                  "phone": {"type": "string"}
+                },
+                "required": ["email", "password", "name", "user_type"]
+              }
+            }
+          }
+        },
+        "responses": {"201": {"description": "User registered successfully"}}
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login with email and password",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string"},
+                  "password": {"type": "string"}
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Login successful, returns tokens"}}
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Refresh JWT access token",
+        "tags": ["Auth"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "New access token"}}
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "summary": "Get current user profile",
+        "tags": ["Auth"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "User profile"}}
+      }
+    },
+    "/api/instruments": {
+      "get": {
+        "summary": "List all instruments",
+        "tags": ["Instruments"],
+        "responses": {"200": {"description": "List of instruments"}}
+      },
+      "post": {
+        "summary": "Create a new instrument",
+        "tags": ["Instruments"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"201": {"description": "Instrument created"}}
+      }
+    },
+    "/api/instruments/{instrument_id}": {
+      "get": {
+        "summary": "Get instrument details",
+        "tags": ["Instruments"],
+        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Instrument details"}}
+      },
+      "put": {
+        "summary": "Update instrument",
+        "tags": ["Instruments"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Instrument updated"}}
+      },
+      "delete": {
+        "summary": "Delete instrument",
+        "tags": ["Instruments"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "instrument_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Deleted"}}
+      }
+    },
+    "/api/instruments/available": {
+      "get": {
+        "summary": "Get available instruments",
+        "tags": ["Instruments"],
+        "responses": {"200": {"description": "Available instruments"}}
+      }
+    },
+    "/api/rentals": {
+      "get": {
+        "summary": "List rentals",
+        "tags": ["Rentals"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Rentals list"}}
+      },
+      "post": {
+        "summary": "Create a rental",
+        "tags": ["Rentals"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"201": {"description": "Rental created"}}
+      }
+    },
+    "/api/rentals/{rental_id}": {
+      "get": {
+        "summary": "Get rental details",
+        "tags": ["Rentals"],
+        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Rental details"}}
+      },
+      "delete": {
+        "summary": "Cancel rental",
+        "tags": ["Rentals"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Cancelled"}}
+      }
+    },
+    "/api/rentals/{rental_id}/return": {
+      "post": {
+        "summary": "Return instrument",
+        "tags": ["Rentals"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "rental_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Returned"}}
+      }
+    },
+    "/api/payments": {
+      "get": {
+        "summary": "Get payments",
+        "tags": ["Payments"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Payments list"}}
+      }
+    },
+    "/api/payments/{rental_id}/initiate": {
+      "post": {
+        "summary": "Initiate payment",
+        "tags": ["Payments"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Payment initiated"}}
+      }
+    },
+    "/api/payments/{rental_id}/confirm": {
+      "post": {
+        "summary": "Confirm payment",
+        "tags": ["Payments"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Confirmed"}}
+      }
+    },
+    "/api/payments/{payment_id}/refund": {
+      "post": {
+        "summary": "Process refund",
+        "tags": ["Payments"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Refund processed"}}
+      }
+    },
+    "/api/reviews": {
+      "get": {
+        "summary": "List reviews",
+        "tags": ["Reviews"],
+        "responses": {"200": {"description": "Reviews list"}}
+      },
+      "post": {
+        "summary": "Create review",
+        "tags": ["Reviews"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"201": {"description": "Review created"}}
+      }
+    },
+    "/api/reviews/{review_id}": {
+      "get": {
+        "summary": "Get review",
+        "tags": ["Reviews"],
+        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Review"}}
+      },
+      "put": {
+        "summary": "Update review",
+        "tags": ["Reviews"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Updated"}}
+      },
+      "delete": {
+        "summary": "Delete review",
+        "tags": ["Reviews"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "review_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Deleted"}}
+      }
+    },
+    "/api/chatbot/chat": {
+      "post": {
+        "summary": "Chat with chatbot",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Chatbot response"}}
+      }
+    },
+    "/api/chatbot/ask-instrument-question": {
+      "post": {
+        "summary": "Ask instrument question",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Answer"}}
+      }
+    },
+    "/api/chatbot/recommend-for-me": {
+      "post": {
+        "summary": "Get recommendations",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Recommendations"}}
+      }
+    },
+    "/api/chatbot/sessions": {
+      "get": {
+        "summary": "Get sessions",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Sessions"}}
+      }
+    },
+    "/api/chatbot/history/{session_id}": {
+      "get": {
+        "summary": "Get chat history",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "History"}}
+      }
+    },
+    "/api/chatbot/clear-session/{session_id}": {
+      "delete": {
+        "summary": "Clear session",
+        "tags": ["Chatbot"],
+        "security": [{"BearerAuth": []}],
+        "parameters": [{"name": "session_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"204": {"description": "Cleared"}}
+      }
+    },
+    "/api/dashboard/owner": {
+      "get": {
+        "summary": "Owner dashboard",
+        "tags": ["Dashboard"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Dashboard data"}}
+      }
+    },
+    "/api/dashboard/renter": {
+      "get": {
+        "summary": "Renter dashboard",
+        "tags": ["Dashboard"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Dashboard data"}}
+      }
+    },
+    "/api/recommendations": {
+      "get": {
+        "summary": "Get recommendations",
+        "tags": ["Other"],
+        "security": [{"BearerAuth": []}],
+        "responses": {"200": {"description": "Recommendations"}}
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "List users",
+        "tags": ["Other"],
+        "responses": {"200": {"description": "Users"}}
+      },
+      "post": {
+        "summary": "Create user",
+        "tags": ["Other"],
+        "responses": {"201": {"description": "Created"}}
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "summary": "Get user",
+        "tags": ["Other"],
+        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "User"}}
+      },
+      "put": {
+        "summary": "Update user",
+        "tags": ["Other"],
+        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Updated"}}
+      },
+      "delete": {
+        "summary": "Delete user",
+        "tags": ["Other"],
+        "parameters": [{"name": "user_id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"204": {"description": "Deleted"}}
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Error code"
+          },
+          "status": {
+            "type": "string",
+            "description": "Error name"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "errors": {
+            "type": "object",
+            "description": "Errors",
+            "additionalProperties": {}
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaginationMetadata": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "total_pages": {
+            "type": "integer"
+          },
+          "first_page": {
+            "type": "integer"
+          },
+          "last_page": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "previous_page": {
+            "type": "integer"
+          },
+          "next_page": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "securitySchemes": {
+    "BearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "JWT access token. Get it by calling /api/auth/login with email and password"
+    }
+  }
+}

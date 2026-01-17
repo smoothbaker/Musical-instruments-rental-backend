@@ -5,18 +5,18 @@ from app.db import db
 from app.models import Instrument, Instru_ownership
 from app.schemas import InstrumentSchema
 
-bp = Blueprint('instruments', __name__, url_prefix='/api/instruments')
+blp = Blueprint('instruments', __name__, url_prefix='/api/instruments', description='Instrument catalog endpoints')
 
-@bp.route('')
+@blp.route('')
 class InstrumentList(MethodView):
-    @bp.response(200, InstrumentSchema(many=True))
+    @blp.response(200, InstrumentSchema(many=True))
     def get(self):
         """Get all instruments in the catalog"""
         instruments = Instrument.query.all()
         return instruments
 
-    @bp.arguments(InstrumentSchema)
-    @bp.response(201, InstrumentSchema)
+    @blp.arguments(InstrumentSchema)
+    @blp.response(201, InstrumentSchema)
     @jwt_required()
     def post(self, instrument_data):
         """Create a new instrument in the catalog (any authenticated user)"""
@@ -35,16 +35,16 @@ class InstrumentList(MethodView):
         db.session.commit()
         return instrument
 
-@bp.route('/<int:instrument_id>')
+@blp.route('/<int:instrument_id>')
 class InstrumentResource(MethodView):
-    @bp.response(200, InstrumentSchema)
+    @blp.response(200, InstrumentSchema)
     def get(self, instrument_id):
         """Get instrument details from catalog"""
         instrument = Instrument.query.get_or_404(instrument_id)
         return instrument
 
-    @bp.arguments(InstrumentSchema)
-    @bp.response(200, InstrumentSchema)
+    @blp.arguments(InstrumentSchema)
+    @blp.response(200, InstrumentSchema)
     @jwt_required()
     def put(self, update_data, instrument_id):
         """Update instrument in catalog"""
@@ -60,7 +60,7 @@ class InstrumentResource(MethodView):
         db.session.commit()
         return instrument
 
-    @bp.response(204)
+    @blp.response(204)
     @jwt_required()
     def delete(self, instrument_id):
         """Delete instrument from catalog"""
@@ -73,9 +73,9 @@ class InstrumentResource(MethodView):
         db.session.delete(instrument)
         db.session.commit()
 
-@bp.route('/available')
+@blp.route('/available')
 class AvailableInstruments(MethodView):
-    @bp.response(200)
+    @blp.response(200)
     def get(self):
         """Get all available instruments for rent (with ownership details)"""
         ownerships = Instru_ownership.query.filter_by(is_available=True).all()

@@ -13,7 +13,7 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 PLATFORM_FEE_PERCENT = 0.10  # 10% platform fee
 
-bp = Blueprint('payments', __name__, url_prefix='/api/payments')
+bp = Blueprint('payments', __name__, url_prefix='/api/payments', description='Payment processing endpoints')
 
 @bp.route('')
 class PaymentList(MethodView):
