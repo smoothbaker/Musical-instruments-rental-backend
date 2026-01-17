@@ -24,6 +24,15 @@ def create_app():
     # This MUST be initialized BEFORE registering blueprints
     api = Api(app)
     
+    # Configure security schemes for Swagger UI Authorize button
+    # This enables users to authenticate and test protected endpoints
+    api.spec.components.security_scheme("Bearer", {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT authentication token. Obtain from /api/auth/login. Click 'Authorize' and enter: Bearer <your-token>"
+    })
+    
     # Import blueprint modules
     from app.routes import (
         auth, instruments, rentals, recommendations, users, 

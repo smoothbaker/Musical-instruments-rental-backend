@@ -1,7 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import db, Instrument, Rental, Review
+from app.models import db, Instrument, Rental, Review, Instru_ownership
 from app.schemas import InstrumentSchema
 from sqlalchemy import func
 
@@ -22,36 +22,42 @@ class Recommendations(MethodView):
         
         # Get user's rental history
         user_rentals = Rental.query.filter_by(user_id=user_id).all()
-        rented_categories = [r.instrument.category for r in user_rentals]
+        rented_categories = [r.instru_ownership.instrument.category for r in user_rentals]
         
         recommendations = []
         
-        # Strategy 1: Similar instruments to what user has rented
+        # Strategy 1: Similar instruments to what user has rented (available ownerships)
         if rented_categories:
-            similar_instruments = Instrument.query.filter(
+            similar_ownerships = db.session.query(Instrument).join(
+                Instru_ownership, Instru_ownership.instrument_id == Instrument.id
+            ).filter(
                 Instrument.category.in_(rented_categories),
-                Instrument.is_available == True
-            ).limit(5).all()
-            recommendations.extend(similar_instruments)
+                Instru_ownership.is_available == True
+            ).distinct().limit(5).all()
+            recommendations.extend(similar_ownerships)
         
-        # Strategy 2: Popular instruments (most rented)
+        # Strategy 2: Popular instruments (most rented) - only from available ownerships
         popular = db.session.query(
             Instrument,
             func.count(Rental.id).label('rental_count')
-        ).join(Rental).filter(
-            Instrument.is_available == True
+        ).join(Instru_ownership, Instru_ownership.instrument_id == Instrument.id
+        ).join(Rental, Rental.instru_ownership_id == Instru_ownership.id
+        ).filter(
+            Instru_ownership.is_available == True
         ).group_by(Instrument.id).order_by(
             func.count(Rental.id).desc()
         ).limit(5).all()
         
         recommendations.extend([p[0] for p in popular])
         
-        # Strategy 3: Highest rated instruments
+        # Strategy 3: Highest rated instruments - only from available ownerships
         top_rated = db.session.query(
             Instrument,
             func.avg(Review.rating).label('avg_rating')
-        ).join(Review).filter(
-            Instrument.is_available == True
+        ).join(Instru_ownership, Instru_ownership.instrument_id == Instrument.id
+        ).join(Review, Review.instru_ownership_id == Instru_ownership.id
+        ).filter(
+            Instru_ownership.is_available == True
         ).group_by(Instrument.id).order_by(
             func.avg(Review.rating).desc()
         ).limit(5).all()

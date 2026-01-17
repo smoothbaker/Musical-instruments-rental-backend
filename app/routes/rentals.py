@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.db import db
 from app.models import Rental, Instru_ownership
 from app.schemas import RentalSchema
-from datetime import datetime
+from datetime import datetime, timezone
 
 blp = Blueprint('rentals', __name__, url_prefix='/api/rentals', description='Rental management endpoints')
 
@@ -103,7 +103,7 @@ class ReturnRental(MethodView):
         if rental.user_id != user_id:
             abort(403, message="Unauthorized")
 
-        rental.actual_return_date = datetime.utcnow().date()
+        rental.actual_return_date = datetime.now(timezone.utc).date()
         rental.status = 'completed'
         rental.instru_ownership.is_available = True
 

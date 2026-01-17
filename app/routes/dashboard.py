@@ -6,6 +6,47 @@ from app.schemas import RentalSchema, InstruOwnershipSchema
 
 bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 
+@bp.route('/stats')
+class DashboardStats(MethodView):
+    @bp.response(200)
+    @jwt_required()
+    def get(self):
+        """Get general dashboard statistics for the current user"""
+        user_id = int(get_jwt_identity())
+        user = User.query.get(user_id)
+        
+        if not user:
+            return {'error': 'User not found'}, 404
+        
+        # Return appropriate stats based on user type
+        if user.user_type == 'renter':
+            rentals = Rental.query.filter_by(user_id=user_id).all()
+            return {
+                'user_type': 'renter',
+                'statistics': {
+                    'total_rentals': len(rentals),
+                    'active_rentals': len([r for r in rentals if r.status == 'active']),
+                    'completed_rentals': len([r for r in rentals if r.status == 'completed']),
+                    'total_spent': sum(r.total_cost or 0 for r in rentals if r.status == 'completed')
+                }
+            }
+        else:  # owner
+            ownerships = Instru_ownership.query.filter_by(user_id=user_id).all()
+            owned_instrument_ids = [o.id for o in ownerships]
+            rentals = Rental.query.filter(Rental.instru_ownership_id.in_(owned_instrument_ids)).all()
+            
+            return {
+                'user_type': 'owner',
+                'statistics': {
+                    'total_instruments': len(ownerships),
+                    'available_instruments': len([o for o in ownerships if o.is_available]),
+                    'total_rentals': len(rentals),
+                    'active_rentals': len([r for r in rentals if r.status == 'active']),
+                    'completed_rentals': len([r for r in rentals if r.status == 'completed']),
+                    'total_earned': sum(r.total_cost or 0 for r in rentals if r.status == 'completed')
+                }
+            }
+
 @bp.route('/renter')
 class RenterDashboard(MethodView):
     @bp.response(200)

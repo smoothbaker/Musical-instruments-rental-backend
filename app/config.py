@@ -68,10 +68,12 @@ class Config:
     }
     
     # Server URLs for Swagger
-    SERVERS = {
+    SERVERS = [
+        {
             "url": "http://localhost:5000",
             "description": "Development Server"
-        },
+        }
+    ]
 
     
     # Swagger UI Configuration

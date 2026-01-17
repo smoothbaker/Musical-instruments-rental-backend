@@ -15,7 +15,7 @@ class User(db.Model):
     
     # Relationships
     rentals = db.relationship('Rental', back_populates='user', lazy=True)
-    reviews = db.relationship('Review', backref='user', lazy=True)
+    reviews = db.relationship('Review', backref='user', lazy=True, overlaps="renter")
     instru_ownerships = db.relationship('Instru_ownership', back_populates='user', lazy=True)
     
     def set_password(self, password):

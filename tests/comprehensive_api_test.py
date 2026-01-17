@@ -6,7 +6,7 @@ Tests all endpoints and provides detailed feedback
 import sys
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime,timedelta, timezone
 import traceback
 import os
 
@@ -64,6 +64,7 @@ def test_database_models():
     
     with app.app_context():
         try:
+            db.drop_all()  # Clean state for each test
             db.create_all()
             
             # Test User model
@@ -112,8 +113,8 @@ def test_database_models():
             rental = Rental(
                 user_id=user.id,
                 instru_ownership_id=ownership.id,
-                start_date=datetime.utcnow().date(),
-                end_date=(datetime.utcnow() + timedelta(days=7)).date(),
+                start_date=datetime.now(timezone.utc).date(),
+                end_date=(datetime.now(timezone.utc) + timedelta(days=7)).date(),
                 status='pending'
             )
             db.session.add(rental)
@@ -196,6 +197,7 @@ def test_api_endpoints():
     print("="*60)
     
     with app.app_context():
+        db.drop_all()  # Clean state for each test
         db.create_all()
         
         # Create test user
@@ -315,6 +317,7 @@ def test_authentication():
     print("="*60)
     
     with app.app_context():
+        db.drop_all()  # Clean state for each test
         db.create_all()
         
         user = User(
@@ -372,6 +375,7 @@ def test_error_handling():
     print("="*60)
     
     with app.app_context():
+        db.drop_all()  # Clean state for each test
         db.create_all()
         
         user = User(

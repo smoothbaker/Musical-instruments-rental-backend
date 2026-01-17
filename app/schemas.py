@@ -1,6 +1,9 @@
 from marshmallow import Schema, fields
 
 class UserSchema(Schema):
+    class Meta:
+        title = "User"
+    
     id = fields.Int(dump_only=True)
     email = fields.Email(required=True)
     password = fields.Str(load_only=True, required=True)
@@ -10,12 +13,18 @@ class UserSchema(Schema):
     created_at = fields.DateTime(dump_only=True)
 
 class UserUpdateSchema(Schema):
+    class Meta:
+        title = "UserUpdate"
+    
     email = fields.Email()
     name = fields.Str()
     phone = fields.Str()
     user_type = fields.Str(validate=lambda x: x in ['owner', 'renter'])
 
 class InstrumentSchema(Schema):
+    class Meta:
+        title = "Instrument"
+    
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
     category = fields.Str(required=True)
@@ -26,6 +35,9 @@ class InstrumentSchema(Schema):
     created_at = fields.DateTime(dump_only=True)
 
 class InstruOwnershipSchema(Schema):
+    class Meta:
+        title = "InstruOwnership"
+    
     id = fields.Int(dump_only=True)
     user_id = fields.Int(dump_only=True)
     instrument_id = fields.Int(required=True)
@@ -40,6 +52,9 @@ class InstruOwnershipSchema(Schema):
     instrument = fields.Nested(InstrumentSchema, dump_only=True)
 
 class InstruOwnershipUpdateSchema(Schema):
+    class Meta:
+        title = "InstruOwnershipUpdate"
+    
     condition = fields.Str(validate=lambda x: x in ['new', 'good', 'fair', 'poor'])
     daily_rate = fields.Float(validate=lambda x: x > 0)
     image_url = fields.Str()
@@ -47,6 +62,9 @@ class InstruOwnershipUpdateSchema(Schema):
     is_available = fields.Bool()
 
 class RentalSchema(Schema):
+    class Meta:
+        title = "Rental"
+    
     id = fields.Int(dump_only=True)
     user_id = fields.Int(dump_only=True)
     instru_ownership_id = fields.Int(required=True)
@@ -61,20 +79,26 @@ class RentalSchema(Schema):
     instru_ownership = fields.Nested(InstruOwnershipSchema, dump_only=True)
 
 class SurveyResponseSchema(Schema):
+    class Meta:
+        title = "SurveyResponse"
+    
     id = fields.Int(dump_only=True)
     user_id = fields.Int(dump_only=True)
-    preferred_instruments = fields.Str()
-    experience_level = fields.Str(validate=lambda x: x in ['beginner', 'intermediate', 'advanced'])
-    favorite_genres = fields.Str()
-    budget_range = fields.Str(validate=lambda x: x in ['0-25', '25-50', '50-100', '100+'])
-    rental_frequency = fields.Str(validate=lambda x: x in ['rarely', 'monthly', 'weekly', 'frequently'])
-    use_case = fields.Str()
-    location = fields.Str()
-    additional_notes = fields.Str()
+    preferred_instruments = fields.Str(required=False, allow_none=True)
+    experience_level = fields.Str(required=False, allow_none=True, validate=lambda x: x in ['beginner', 'intermediate', 'advanced'] if x else True)
+    favorite_genres = fields.Str(required=False, allow_none=True)
+    budget_range = fields.Str(required=False, allow_none=True, validate=lambda x: x in ['0-25', '25-50', '50-100', '100+'] if x else True)
+    rental_frequency = fields.Str(required=False, allow_none=True, validate=lambda x: x in ['rarely', 'monthly', 'weekly', 'frequently'] if x else True)
+    use_case = fields.Str(required=False, allow_none=True)
+    location = fields.Str(required=False, allow_none=True)
+    additional_notes = fields.Str(required=False, allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 
 class SurveyResponseUpdateSchema(Schema):
+    class Meta:
+        title = "SurveyResponseUpdate"
+    
     preferred_instruments = fields.Str()
     experience_level = fields.Str(validate=lambda x: x in ['beginner', 'intermediate', 'advanced'])
     favorite_genres = fields.Str()
@@ -121,6 +145,9 @@ class PaymentListSchema(Schema):
     completed_at = fields.DateTime(dump_only=True)
 
 class ReviewSchema(Schema):
+    class Meta:
+        title = "Review"
+    
     id = fields.Int(dump_only=True)
     rental_id = fields.Int(dump_only=True)
     instru_ownership_id = fields.Int(dump_only=True)
@@ -132,11 +159,17 @@ class ReviewSchema(Schema):
     renter_name = fields.Str(dump_only=True)
 
 class ReviewCreateSchema(Schema):
+    class Meta:
+        title = "ReviewCreate"
+    
     rental_id = fields.Int(required=True)
     rating = fields.Int(required=True, validate=lambda x: 1 <= x <= 5)
     comment = fields.Str(allow_none=True)
 
 class ReviewUpdateSchema(Schema):
+    class Meta:
+        title = "ReviewUpdate"
+    
     rating = fields.Int(validate=lambda x: 1 <= x <= 5)
     comment = fields.Str(allow_none=True)
 
