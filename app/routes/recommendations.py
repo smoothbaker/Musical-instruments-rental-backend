@@ -2,8 +2,10 @@ from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import db, Instrument, Rental, Review, Instru_ownership
-from app.schemas import InstrumentSchema
+from app.schemas import InstrumentSchema, InstrumentRecommendationRequestSchema
+from app.services.recommendation_service import recommend_instruments_by_needs
 from sqlalchemy import func
+import os
 
 bp = Blueprint('recommendations', __name__, url_prefix='/api/recommendations', description='Recommendation endpoints')
 
@@ -73,3 +75,37 @@ class Recommendations(MethodView):
                 unique_recommendations.append(instrument)
         
         return unique_recommendations[:10]
+
+@bp.route('/by-needs')
+class RecommendationsByNeeds(MethodView):
+    @bp.arguments(InstrumentRecommendationRequestSchema)
+    @bp.response(200)
+    @jwt_required()
+    def post(self, args):
+        """Get AI-powered instrument recommendations based on user needs
+        
+        Uses Hugging Face LLM API to analyze user requirements and match them
+        with available instruments in the database.
+        
+        Args:
+            user_needs (str): Describe what you're looking for, e.g., "beginner acoustic guitar under $30/day"
+            budget (float, optional): Maximum daily rental budget
+            experience_level (str, optional): beginner, intermediate, or advanced
+        
+        Returns:
+            Top 5 instrument recommendations with match scores and reasoning
+        """
+        user_id = get_jwt_identity()
+        
+        # Get HuggingFace token from environment (optional)
+        hf_token = os.getenv("HUGGINGFACE_API_KEY", None)
+        
+        # Get recommendations using AI service
+        recommendations = recommend_instruments_by_needs(
+            user_needs=args.get('user_needs'),
+            budget=args.get('budget'),
+            experience_level=args.get('experience_level'),
+            hf_token=hf_token
+        )
+        
+        return recommendations

@@ -208,3 +208,13 @@ class ChatResponseSchema(Schema):
     recommendations = fields.List(fields.Dict())  # List of recommended instruments
     context = fields.Dict()  # Context data used for response
     created_at = fields.DateTime()
+
+class InstrumentRecommendationRequestSchema(Schema):
+    """Schema for AI-based instrument recommendation requests"""
+    class Meta:
+        title = "InstrumentRecommendationRequest"
+    
+    user_needs = fields.Str(required=True)  # e.g., "beginner guitarist looking for affordable acoustic guitar"
+    budget = fields.Float(required=False, allow_none=True)
+    experience_level = fields.Str(required=False, allow_none=True)
+    use_case = fields.Str(required=False, allow_none=True)
